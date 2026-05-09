@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TravelMate.Application;
 using TravelMate.Infrastructure.Persistence;
+using TravelMate.Infrastructure.Search;
+using TravelMate.Infrastructure.Storage;
 
 namespace TravelMate.Infrastructure;
 
@@ -25,7 +27,27 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddScoped<ITravelMateRepository, EfTravelMateRepository>();
+        services.AddScoped<IContributionRepository, EfContributionRepository>();
         services.AddScoped<TravelMateSeeder>();
+
+        var audioOptions = configuration.GetSection("AudioStorage").Get<AudioStorageOptions>() ?? new AudioStorageOptions();
+        services.AddSingleton(audioOptions);
+        services.AddScoped<IAudioStorageService>(_ =>
+            audioOptions.IsAzureConfigured
+                ? new AzureBlobAudioStorageService(audioOptions)
+                : new LocalAudioStorageService(audioOptions));
+
+        var searchOptions = configuration.GetSection("AzureSearch").Get<StorySearchOptions>() ?? new StorySearchOptions();
+        services.AddSingleton(searchOptions);
+        if (searchOptions.IsAzureConfigured)
+        {
+            services.AddScoped<IStorySearchService>(_ => new AzureStorySearchService(searchOptions));
+        }
+        else
+        {
+            services.AddSingleton<IStorySearchService, InMemoryStorySearchService>();
+        }
+
         return services;
     }
 }

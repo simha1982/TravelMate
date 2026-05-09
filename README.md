@@ -11,6 +11,9 @@ The MVP backend is a C#/.NET API that can:
 - Answer a simple "tell me about this place" conversation request.
 - Store data through EF Core using SQL Server in Azure or an in-memory database locally.
 - Call Azure OpenAI and Azure Speech through gateway abstractions, with local stubs when cloud settings are absent.
+- Save generated story audio to local disk or Azure Blob Storage.
+- Index and search curated stories through local in-memory search or Azure AI Search.
+- Accept user story contributions and create moderation review records.
 - Run a .NET MAUI Android-first mobile app for location, nearby story prompts, and feedback.
 
 ## Solution Structure
@@ -77,6 +80,19 @@ Set these values for Azure-backed development:
     "Region": "<region>",
     "ApiKey": "<key>",
     "DefaultVoiceName": "en-US-JennyNeural"
+  },
+  "AudioStorage": {
+    "ConnectionString": "<storage-connection-string>",
+    "ContainerName": "story-audio"
+  },
+  "AzureSearch": {
+    "Endpoint": "https://<search-service>.search.windows.net",
+    "ApiKey": "<admin-or-query-key>",
+    "IndexName": "travelmate-stories"
+  },
+  "Auth": {
+    "RequireApiKey": true,
+    "ApiKey": "<temporary-api-key>"
   }
 }
 ```
@@ -85,11 +101,11 @@ Use `appsettings.Local.json`, user secrets, Key Vault, or pipeline secrets for r
 
 ## Next Build Steps
 
-1. Add Azure Blob Storage persistence for generated audio files.
-2. Add Azure AI Search indexing and retrieval for RAG.
-3. Add contribution upload and moderation workflow.
-4. Add Entra ID B2C authentication.
-5. Add API Management and production deployment pipeline.
+1. Replace optional API-key gate with Entra ID B2C JWT validation.
+2. Create the Azure AI Search index schema during deployment.
+3. Add real Blob SAS playback URLs for mobile audio.
+4. Add payment/subscription entitlements.
+5. Add human moderator portal.
 6. Add richer MAUI audio playback and voice command UX.
 
 ## Infrastructure

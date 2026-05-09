@@ -10,3 +10,4 @@ obj/
 TestResults/
 *.nupkg
 appsettings.Local.json
+App_Data/

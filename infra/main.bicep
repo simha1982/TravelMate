@@ -26,6 +26,7 @@ var sqlServerName = '${namePrefix}-sql-${uniqueSuffix}'
 var appServicePlanName = '${namePrefix}-plan'
 var apiAppName = '${namePrefix}-api-${uniqueSuffix}'
 var searchName = '${namePrefix}-search-${uniqueSuffix}'
+var apiManagementName = '${namePrefix}-apim-${uniqueSuffix}'
 var keyVaultName = '${namePrefix}-kv-${uniqueSuffix}'
 var appInsightsName = '${namePrefix}-appi'
 var logAnalyticsName = '${namePrefix}-log'
@@ -138,6 +139,26 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
           name: 'TravelMate__SqlDatabase'
           value: 'TravelMate'
         }
+        {
+          name: 'AudioStorage__ContainerName'
+          value: 'story-audio'
+        }
+        {
+          name: 'AzureSearch__Endpoint'
+          value: 'https://${search.name}.search.windows.net'
+        }
+        {
+          name: 'AzureSearch__IndexName'
+          value: 'travelmate-stories'
+        }
+        {
+          name: 'AzureSpeech__Region'
+          value: location
+        }
+        {
+          name: 'AzureOpenAI__Endpoint'
+          value: openAi.properties.endpoint
+        }
       ]
     }
   }
@@ -197,7 +218,21 @@ resource keyVault 'Microsoft.KeyVault/vaults@2024-04-01-preview' = {
   }
 }
 
+resource apiManagement 'Microsoft.ApiManagement/service@2023-09-01-preview' = {
+  name: apiManagementName
+  location: location
+  sku: {
+    name: 'Developer'
+    capacity: 1
+  }
+  properties: {
+    publisherEmail: 'admin@travelmate.local'
+    publisherName: 'TravelMate'
+  }
+}
+
 output apiUrl string = 'https://${apiApp.properties.defaultHostName}'
+output apiManagementGatewayUrl string = apiManagement.properties.gatewayUrl
 output storageAccountName string = storage.name
 output sqlServerFullyQualifiedDomainName string = sqlServer.properties.fullyQualifiedDomainName
 output searchServiceName string = search.name

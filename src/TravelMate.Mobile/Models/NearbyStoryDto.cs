@@ -13,3 +13,17 @@ public sealed record NearbyStoryDto(
     string SourceName);
 
 public sealed record PlaybackEventRequest(string UserId, string Action);
+
+public sealed record RagAnswerRequest(string Question, string UserId = "demo-user", int Top = 3);
+
+public sealed record RagAnswerResponse(string Answer, SearchableStoryDto[] Sources);
+
+public sealed record SearchableStoryDto(
+    string Id,
+    string PlaceName,
+    string Title,
+    string Summary,
+    string LanguageCode,
+    string[] Categories,
+    string SourceName,
+    string SourceUrl);

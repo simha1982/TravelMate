@@ -29,4 +29,14 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
             cancellationToken);
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task<RagAnswerResponse?> AskAsync(string question, CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PostAsJsonAsync(
+            "api/rag/answer",
+            new RagAnswerRequest(question, DemoUserId),
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<RagAnswerResponse>(cancellationToken);
+    }
 }

@@ -51,6 +51,19 @@
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Border>
+
+            <Entry
+                x:Name="QuestionEntry"
+                Placeholder="Ask about nearby stories" />
+
+            <Button
+                Text="Ask TravelMate"
+                Clicked="OnAskClicked" />
+
+            <Label
+                x:Name="AnswerLabel"
+                Text=""
+                FontSize="14" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

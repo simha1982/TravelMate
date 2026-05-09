@@ -39,6 +39,8 @@ builder.Services.AddSingleton<ITextToSpeechGateway>(serviceProvider =>
 });
 builder.Services.AddScoped<NearbyStoryService>();
 builder.Services.AddScoped<ConversationService>();
+builder.Services.AddScoped<RagService>();
+builder.Services.AddScoped<ContributionService>();
 
 var app = builder.Build();
 
@@ -46,6 +48,7 @@ using (var scope = app.Services.CreateScope())
 {
     var seeder = scope.ServiceProvider.GetRequiredService<TravelMateSeeder>();
     await seeder.SeedAsync(CancellationToken.None);
+    await SeedSearchAsync(scope.ServiceProvider, CancellationToken.None);
 }
 
 if (app.Environment.IsDevelopment())
@@ -54,6 +57,34 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.Use(async (context, next) =>
+{
+    var requireApiKey = app.Configuration.GetValue("Auth:RequireApiKey", false);
+    var configuredApiKey = app.Configuration["Auth:ApiKey"];
+    if (!requireApiKey)
+    {
+        await next();
+        return;
+    }
+
+    if (string.IsNullOrWhiteSpace(configuredApiKey))
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsync("API key auth is enabled but Auth:ApiKey is not configured.");
+        return;
+    }
+
+    if (!context.Request.Headers.TryGetValue("X-TravelMate-Api-Key", out var providedApiKey)
+        || providedApiKey != configuredApiKey)
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        await context.Response.WriteAsync("Missing or invalid TravelMate API key.");
+        return;
+    }
+
+    await next();
+});
 
 app.MapGet("/", () => Results.Ok(new
 {
@@ -182,6 +213,120 @@ app.MapPost("/api/speech/synthesize", async (
 })
 .WithName("SynthesizeSpeech");
 
+app.MapPost("/api/stories/{storyId:guid}/audio", async (
+    Guid storyId,
+    SpeechSynthesisRequest request,
+    ITextToSpeechGateway speechGateway,
+    IAudioStorageService audioStorage,
+    CancellationToken cancellationToken) =>
+{
+    var audio = await speechGateway.SynthesizeAsync(
+        request.Text,
+        request.LanguageCode,
+        request.VoiceName,
+        cancellationToken);
+    var stored = await audioStorage.SaveStoryAudioAsync(
+        storyId,
+        audio.Content,
+        audio.ContentType,
+        audio.FileExtension,
+        cancellationToken);
+
+    return Results.Ok(stored);
+})
+.WithName("GenerateAndStoreStoryAudio");
+
+app.MapPost("/api/search/reindex", async (
+    IServiceProvider serviceProvider,
+    CancellationToken cancellationToken) =>
+{
+    await SeedSearchAsync(serviceProvider, cancellationToken);
+    return Results.Accepted();
+})
+.WithName("ReindexStories");
+
+app.MapPost("/api/rag/answer", async (
+    RagAnswerRequest request,
+    RagService ragService,
+    CancellationToken cancellationToken) =>
+{
+    var response = await ragService.AnswerAsync(request, cancellationToken);
+    return Results.Ok(response);
+})
+.WithName("RagAnswer");
+
+app.MapPost("/api/contributions", async (
+    SubmitContributionRequest request,
+    ContributionService contributionService,
+    CancellationToken cancellationToken) =>
+{
+    var contribution = await contributionService.SubmitAsync(request, cancellationToken);
+    return Results.Created($"/api/contributions/{contribution.Id}", contribution);
+})
+.WithName("SubmitContribution");
+
+app.MapGet("/api/admin/moderation-queue", async (
+    ContributionService contributionService,
+    CancellationToken cancellationToken) =>
+{
+    var queue = await contributionService.GetQueueAsync(cancellationToken);
+    return Results.Ok(queue);
+})
+.WithName("ModerationQueue");
+
+app.MapGet("/api/admin/contributions/{contributionId:guid}/moderation-results", async (
+    Guid contributionId,
+    ContributionService contributionService,
+    CancellationToken cancellationToken) =>
+{
+    var results = await contributionService.GetModerationResultsAsync(contributionId, cancellationToken);
+    return Results.Ok(results);
+})
+.WithName("ModerationResults");
+
+app.MapPost("/api/admin/contributions/{contributionId:guid}/approve", async (
+    Guid contributionId,
+    ContributionService contributionService,
+    CancellationToken cancellationToken) =>
+{
+    var updated = await contributionService.UpdateStatusAsync(contributionId, ContributionStatus.Approved, cancellationToken);
+    return updated is null ? Results.NotFound() : Results.Ok(updated);
+})
+.WithName("ApproveContribution");
+
+app.MapPost("/api/admin/contributions/{contributionId:guid}/reject", async (
+    Guid contributionId,
+    ContributionService contributionService,
+    CancellationToken cancellationToken) =>
+{
+    var updated = await contributionService.UpdateStatusAsync(contributionId, ContributionStatus.Rejected, cancellationToken);
+    return updated is null ? Results.NotFound() : Results.Ok(updated);
+})
+.WithName("RejectContribution");
+
 app.Run();
+
+static async Task SeedSearchAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
+{
+    var repository = serviceProvider.GetRequiredService<ITravelMateRepository>();
+    var searchService = serviceProvider.GetRequiredService<IStorySearchService>();
+    var places = await repository.GetPlacesAsync(cancellationToken);
+    var stories = await repository.GetStoriesAsync(cancellationToken);
+    var documents = stories.Select(story =>
+    {
+        var place = places.FirstOrDefault(item => item.Id == story.PlaceId);
+        return new SearchableStory(
+            story.Id.ToString("N"),
+            place?.Name ?? "Unknown place",
+            story.Title,
+            story.ShortDescription,
+            story.LanguageCode,
+            story.Categories.ToArray(),
+            story.SourceName,
+            story.SourceUrl);
+    }).ToArray();
+
+    await searchService.IndexStoriesAsync(documents, cancellationToken);
+}
 
 public sealed record PlaybackEventRequest(string UserId, PlaybackAction Action);

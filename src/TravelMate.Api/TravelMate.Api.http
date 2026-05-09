@@ -20,6 +20,37 @@ Accept: application/json
 
 ###
 
+POST {{TravelMate.Api_HostAddress}}/api/rag/answer
+Content-Type: application/json
+
+{
+  "question": "Tell me about Nandi Hills",
+  "userId": "demo-user",
+  "top": 3
+}
+
+###
+
+POST {{TravelMate.Api_HostAddress}}/api/contributions
+Content-Type: application/json
+
+{
+  "contributorUserId": "demo-user",
+  "placeName": "Nandi Hills",
+  "latitude": 13.3702,
+  "longitude": 77.6835,
+  "languageCode": "en",
+  "title": "A sunrise story",
+  "storyText": "A local traveller describes the sunrise at Nandi Hills, the fort walls, and the quiet morning road."
+}
+
+###
+
+GET {{TravelMate.Api_HostAddress}}/api/admin/moderation-queue
+Accept: application/json
+
+###
+
 POST {{TravelMate.Api_HostAddress}}/api/ai/story-summary
 Content-Type: application/json
 

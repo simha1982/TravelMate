@@ -12,6 +12,7 @@ Infrastructure is defined with Bicep.
 - Azure OpenAI account for summarization, personalization, and RAG
 - Azure Key Vault for secrets
 - Application Insights and Log Analytics for observability
+- Azure API Management developer tier for API gateway hardening
 
 ## Deploy
 
@@ -27,3 +28,13 @@ az deployment group create `
 ```
 
 Use Key Vault or a secure pipeline variable for the SQL password in CI/CD.
+
+After deployment, store these values in Key Vault or App Service settings:
+
+- `ConnectionStrings__TravelMateSql`
+- `AudioStorage__ConnectionString`
+- `AzureSearch__ApiKey`
+- `AzureOpenAI__ApiKey`
+- `AzureOpenAI__ChatDeployment`
+- `AzureOpenAI__EmbeddingDeployment`
+- `AzureSpeech__ApiKey`

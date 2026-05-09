@@ -79,4 +79,25 @@ public partial class MainPage : ContentPage
         await apiClient.SavePlaybackEventAsync(selectedStory.StoryId, action, CancellationToken.None);
         StatusLabel.Text = $"Saved feedback: {action}.";
     }
+
+    private async void OnAskClicked(object? sender, EventArgs e)
+    {
+        var question = QuestionEntry.Text;
+        if (string.IsNullOrWhiteSpace(question))
+        {
+            AnswerLabel.Text = "Ask a question first.";
+            return;
+        }
+
+        try
+        {
+            AnswerLabel.Text = "Thinking...";
+            var answer = await apiClient.AskAsync(question, CancellationToken.None);
+            AnswerLabel.Text = answer?.Answer ?? "No answer returned.";
+        }
+        catch (Exception ex)
+        {
+            AnswerLabel.Text = $"Could not answer yet: {ex.Message}";
+        }
+    }
 }
