@@ -178,6 +178,80 @@ resource search 'Microsoft.Search/searchServices@2024-06-01-preview' = {
   }
 }
 
+resource storySearchIndex 'Microsoft.Search/searchServices/indexes@2024-06-01-preview' = {
+  parent: search
+  name: 'travelmate-stories'
+  properties: {
+    fields: [
+      {
+        name: 'id'
+        type: 'Edm.String'
+        key: true
+        searchable: false
+        filterable: true
+        sortable: false
+        facetable: false
+      }
+      {
+        name: 'placeName'
+        type: 'Edm.String'
+        searchable: true
+        filterable: true
+        sortable: true
+        facetable: false
+      }
+      {
+        name: 'title'
+        type: 'Edm.String'
+        searchable: true
+        filterable: false
+        sortable: true
+        facetable: false
+      }
+      {
+        name: 'summary'
+        type: 'Edm.String'
+        searchable: true
+        filterable: false
+        sortable: false
+        facetable: false
+      }
+      {
+        name: 'languageCode'
+        type: 'Edm.String'
+        searchable: false
+        filterable: true
+        sortable: false
+        facetable: true
+      }
+      {
+        name: 'categories'
+        type: 'Collection(Edm.String)'
+        searchable: true
+        filterable: true
+        sortable: false
+        facetable: true
+      }
+      {
+        name: 'sourceName'
+        type: 'Edm.String'
+        searchable: true
+        filterable: true
+        sortable: false
+        facetable: false
+      }
+      {
+        name: 'sourceUrl'
+        type: 'Edm.String'
+        searchable: false
+        filterable: false
+        sortable: false
+        facetable: false
+      }
+    ]
+  }
+}
+
 resource speech 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
   name: speechName
   location: location
@@ -236,6 +310,7 @@ output apiManagementGatewayUrl string = apiManagement.properties.gatewayUrl
 output storageAccountName string = storage.name
 output sqlServerFullyQualifiedDomainName string = sqlServer.properties.fullyQualifiedDomainName
 output searchServiceName string = search.name
+output searchIndexName string = storySearchIndex.name
 output speechServiceName string = speech.name
 output openAiAccountName string = openAi.name
 output keyVaultName string = keyVault.name

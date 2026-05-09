@@ -8,6 +8,7 @@ public sealed class TravelMateDbContext(DbContextOptions<TravelMateDbContext> op
     public DbSet<StoryEntity> Stories => Set<StoryEntity>();
     public DbSet<UserPreferenceEntity> UserPreferences => Set<UserPreferenceEntity>();
     public DbSet<PlaybackEventEntity> PlaybackEvents => Set<PlaybackEventEntity>();
+    public DbSet<SubscriptionEntity> Subscriptions => Set<SubscriptionEntity>();
     public DbSet<ContributionEntity> Contributions => Set<ContributionEntity>();
     public DbSet<ModerationResultEntity> ModerationResults => Set<ModerationResultEntity>();
 
@@ -51,6 +52,14 @@ public sealed class TravelMateDbContext(DbContextOptions<TravelMateDbContext> op
             entity.Property(playbackEvent => playbackEvent.Action).HasMaxLength(50).IsRequired();
             entity.HasIndex(playbackEvent => new { playbackEvent.UserId, playbackEvent.OccurredAt });
             entity.HasIndex(playbackEvent => playbackEvent.StoryId);
+        });
+
+        modelBuilder.Entity<SubscriptionEntity>(entity =>
+        {
+            entity.HasKey(subscription => subscription.UserId);
+            entity.Property(subscription => subscription.UserId).HasMaxLength(100);
+            entity.Property(subscription => subscription.Tier).HasMaxLength(50).IsRequired();
+            entity.HasIndex(subscription => subscription.ExpiresAt);
         });
 
         modelBuilder.Entity<ContributionEntity>(entity =>
@@ -114,6 +123,14 @@ public sealed class PlaybackEventEntity
     public Guid StoryId { get; set; }
     public string Action { get; set; } = string.Empty;
     public DateTimeOffset OccurredAt { get; set; }
+}
+
+public sealed class SubscriptionEntity
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Tier { get; set; } = "Free";
+    public DateTimeOffset? ExpiresAt { get; set; }
+    public int DailyStoryLimit { get; set; } = 5;
 }
 
 public sealed class ContributionEntity

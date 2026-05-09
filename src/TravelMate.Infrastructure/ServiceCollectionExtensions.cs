@@ -28,6 +28,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ITravelMateRepository, EfTravelMateRepository>();
         services.AddScoped<IContributionRepository, EfContributionRepository>();
+        services.AddScoped<ISubscriptionRepository, EfSubscriptionRepository>();
         services.AddScoped<TravelMateSeeder>();
 
         var audioOptions = configuration.GetSection("AudioStorage").Get<AudioStorageOptions>() ?? new AudioStorageOptions();

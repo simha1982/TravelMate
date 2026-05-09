@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using TravelMate.Application;
 
 namespace TravelMate.Infrastructure.Storage;
@@ -26,6 +27,13 @@ public sealed class AzureBlobAudioStorageService(AudioStorageOptions options) : 
             new BlobHttpHeaders { ContentType = contentType },
             cancellationToken: cancellationToken);
 
-        return new StoredAudio(blob.Uri.ToString(), contentType, content.LongLength);
+        var playbackUrl = blob.Uri.ToString();
+        if (blob.CanGenerateSasUri)
+        {
+            var expiresOn = DateTimeOffset.UtcNow.AddHours(Math.Max(1, options.SasHours));
+            playbackUrl = blob.GenerateSasUri(BlobSasPermissions.Read, expiresOn).ToString();
+        }
+
+        return new StoredAudio(playbackUrl, contentType, content.LongLength);
     }
 }

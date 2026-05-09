@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using TravelMate.AI;
 using TravelMate.Application;
 using TravelMate.Domain;
@@ -5,12 +7,30 @@ using TravelMate.Infrastructure;
 using TravelMate.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
+var azureAdB2CEnabled = builder.Configuration.GetValue("AzureAdB2C:Enabled", false)
+    && !string.IsNullOrWhiteSpace(builder.Configuration["AzureAdB2C:Authority"])
+    && !string.IsNullOrWhiteSpace(builder.Configuration["AzureAdB2C:Audience"]);
 
 builder.Services.AddOpenApi();
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
 {
     builder.Services.AddApplicationInsightsTelemetry();
 }
+if (azureAdB2CEnabled)
+{
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.Authority = builder.Configuration["AzureAdB2C:Authority"];
+            options.Audience = builder.Configuration["AzureAdB2C:Audience"];
+        });
+    builder.Services.AddAuthorization();
+}
+
 builder.Services.AddTravelMateInfrastructure(builder.Configuration);
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IModelGateway>(serviceProvider =>
@@ -41,6 +61,7 @@ builder.Services.AddScoped<NearbyStoryService>();
 builder.Services.AddScoped<ConversationService>();
 builder.Services.AddScoped<RagService>();
 builder.Services.AddScoped<ContributionService>();
+builder.Services.AddScoped<EntitlementService>();
 
 var app = builder.Build();
 
@@ -86,6 +107,12 @@ app.Use(async (context, next) =>
     await next();
 });
 
+if (azureAdB2CEnabled)
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+}
+
 app.MapGet("/", () => Results.Ok(new
 {
     name = "TravelMate",
@@ -97,9 +124,18 @@ app.MapGet("/", () => Results.Ok(new
         "GET /api/preferences/{userId}",
         "POST /api/preferences",
         "POST /api/stories/{storyId}/playback-events",
-        "POST /api/conversation/message"
+        "POST /api/conversation/message",
+        "GET /api/subscriptions/{userId}/entitlements",
+        "POST /api/admin/subscriptions"
     }
 }));
+
+app.MapGet("/api/auth/status", () => Results.Ok(new
+{
+    apiKeyEnabled = app.Configuration.GetValue("Auth:RequireApiKey", false),
+    azureAdB2CEnabled
+}))
+.WithName("AuthStatus");
 
 app.MapGet("/api/stories/nearby", async (
     string userId,
@@ -161,8 +197,20 @@ app.MapPost("/api/stories/{storyId:guid}/playback-events", async (
     Guid storyId,
     PlaybackEventRequest request,
     ITravelMateRepository repository,
+    EntitlementService entitlementService,
     CancellationToken cancellationToken) =>
 {
+    if (request.Action is PlaybackAction.Played or PlaybackAction.Completed)
+    {
+        var entitlement = await entitlementService.GetEntitlementsAsync(request.UserId, cancellationToken);
+        if (!entitlement.CanPlayMoreStories)
+        {
+            return Results.Problem(
+                "Daily free story limit reached. Upgrade the subscription to continue playback.",
+                statusCode: StatusCodes.Status402PaymentRequired);
+        }
+    }
+
     var playbackEvent = new PlaybackEvent(
         request.UserId,
         storyId,
@@ -173,6 +221,26 @@ app.MapPost("/api/stories/{storyId:guid}/playback-events", async (
     return Results.Accepted($"/api/stories/{storyId}", playbackEvent);
 })
 .WithName("SavePlaybackEvent");
+
+app.MapGet("/api/subscriptions/{userId}/entitlements", async (
+    string userId,
+    EntitlementService entitlementService,
+    CancellationToken cancellationToken) =>
+{
+    var entitlement = await entitlementService.GetEntitlementsAsync(userId, cancellationToken);
+    return Results.Ok(entitlement);
+})
+.WithName("GetEntitlements");
+
+app.MapPost("/api/admin/subscriptions", async (
+    SaveSubscriptionRequest request,
+    EntitlementService entitlementService,
+    CancellationToken cancellationToken) =>
+{
+    var subscription = await entitlementService.SaveAsync(request, cancellationToken);
+    return Results.Ok(subscription);
+})
+.WithName("SaveSubscription");
 
 app.MapPost("/api/conversation/message", async (
     ConversationRequest request,
