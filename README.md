@@ -34,7 +34,7 @@ dotnet run --project .\src\TravelMate.Api\TravelMate.Api.csproj
 Open:
 
 ```text
-https://localhost:7001/
+http://localhost:5068/
 ```
 
 Example nearby story request for Nandi Hills:
