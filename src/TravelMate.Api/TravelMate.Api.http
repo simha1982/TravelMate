@@ -1,0 +1,11 @@
+@TravelMate.Api_HostAddress = http://localhost:5068
+
+GET {{TravelMate.Api_HostAddress}}/
+Accept: application/json
+
+###
+
+GET {{TravelMate.Api_HostAddress}}/api/stories/nearby?userId=demo-user&lat=13.3702&lon=77.6835&radiusMeters=5000
+Accept: application/json
+
+###
