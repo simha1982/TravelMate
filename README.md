@@ -9,7 +9,9 @@ The MVP backend is a C#/.NET API that can:
 - Save user preferences.
 - Capture playback feedback such as played, skipped, and interested.
 - Answer a simple "tell me about this place" conversation request.
-- Keep AI behind an `IModelGateway` abstraction so Azure OpenAI or on-prem models can be added without changing business logic.
+- Store data through EF Core using SQL Server in Azure or an in-memory database locally.
+- Call Azure OpenAI and Azure Speech through gateway abstractions, with local stubs when cloud settings are absent.
+- Run a .NET MAUI Android-first mobile app for location, nearby story prompts, and feedback.
 
 ## Solution Structure
 
@@ -22,7 +24,12 @@ TravelMate/
     |-- TravelMate.Domain
     |-- TravelMate.Infrastructure
     |-- TravelMate.AI
-    `-- TravelMate.Workers
+    |-- TravelMate.Workers
+    `-- TravelMate.Mobile
+tests/
+`-- TravelMate.Tests
+infra/
+`-- main.bicep
 ```
 
 ## Run Locally
@@ -43,14 +50,47 @@ Example nearby story request for Nandi Hills:
 GET /api/stories/nearby?userId=demo-user&lat=13.3702&lon=77.6835&radiusMeters=5000
 ```
 
+Run tests:
+
+```powershell
+dotnet test .\TravelMate.sln
+```
+
+## Configuration
+
+Local development uses EF Core InMemory when `ConnectionStrings:TravelMateSql` is empty.
+
+Set these values for Azure-backed development:
+
+```json
+{
+  "ConnectionStrings": {
+    "TravelMateSql": "<azure-sql-connection-string>"
+  },
+  "AzureOpenAI": {
+    "Endpoint": "https://<account>.openai.azure.com",
+    "ApiKey": "<key>",
+    "ChatDeployment": "<chat-deployment>",
+    "EmbeddingDeployment": "<embedding-deployment>"
+  },
+  "AzureSpeech": {
+    "Region": "<region>",
+    "ApiKey": "<key>",
+    "DefaultVoiceName": "en-US-JennyNeural"
+  }
+}
+```
+
+Use `appsettings.Local.json`, user secrets, Key Vault, or pipeline secrets for real keys.
+
 ## Next Build Steps
 
-1. Replace in-memory repository with EF Core and Azure SQL.
-2. Add Azure Blob Storage for generated audio.
-3. Add Azure AI Speech for text-to-speech and speech-to-text.
-4. Add Azure OpenAI implementation for `IModelGateway`.
-5. Add .NET MAUI mobile app for location, story prompts, and playback.
-6. Add Azure AI Search for vector and keyword story retrieval.
+1. Add Azure Blob Storage persistence for generated audio files.
+2. Add Azure AI Search indexing and retrieval for RAG.
+3. Add contribution upload and moderation workflow.
+4. Add Entra ID B2C authentication.
+5. Add API Management and production deployment pipeline.
+6. Add richer MAUI audio playback and voice command UX.
 
 ## Infrastructure
 

@@ -2,16 +2,51 @@ using TravelMate.AI;
 using TravelMate.Application;
 using TravelMate.Domain;
 using TravelMate.Infrastructure;
+using TravelMate.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-builder.Services.AddSingleton<ITravelMateRepository, InMemoryTravelMateRepository>();
-builder.Services.AddSingleton<IModelGateway, StubModelGateway>();
+if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+{
+    builder.Services.AddApplicationInsightsTelemetry();
+}
+builder.Services.AddTravelMateInfrastructure(builder.Configuration);
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IModelGateway>(serviceProvider =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var options = configuration.GetSection("AzureOpenAI").Get<AzureOpenAiOptions>() ?? new AzureOpenAiOptions();
+    if (!options.IsConfigured)
+    {
+        return new StubModelGateway();
+    }
+
+    var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+    return new AzureOpenAiModelGateway(httpClientFactory.CreateClient("AzureOpenAI"), options);
+});
+builder.Services.AddSingleton<ITextToSpeechGateway>(serviceProvider =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var options = configuration.GetSection("AzureSpeech").Get<AzureSpeechOptions>() ?? new AzureSpeechOptions();
+    if (!options.IsConfigured)
+    {
+        return new StubTextToSpeechGateway();
+    }
+
+    var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+    return new AzureSpeechGateway(httpClientFactory.CreateClient("AzureSpeech"), options);
+});
 builder.Services.AddScoped<NearbyStoryService>();
 builder.Services.AddScoped<ConversationService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<TravelMateSeeder>();
+    await seeder.SeedAsync(CancellationToken.None);
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -52,6 +87,24 @@ app.MapGet("/api/stories/nearby", async (
     return Results.Ok(stories);
 })
 .WithName("GetNearbyStories");
+
+app.MapGet("/api/places", async (
+    ITravelMateRepository repository,
+    CancellationToken cancellationToken) =>
+{
+    var places = await repository.GetPlacesAsync(cancellationToken);
+    return Results.Ok(places);
+})
+.WithName("GetPlaces");
+
+app.MapGet("/api/stories", async (
+    ITravelMateRepository repository,
+    CancellationToken cancellationToken) =>
+{
+    var stories = await repository.GetStoriesAsync(cancellationToken);
+    return Results.Ok(stories);
+})
+.WithName("GetStories");
 
 app.MapGet("/api/preferences/{userId}", async (
     string userId,
@@ -99,6 +152,35 @@ app.MapPost("/api/conversation/message", async (
     return Results.Ok(response);
 })
 .WithName("ConversationMessage");
+
+app.MapPost("/api/ai/story-summary", async (
+    StorySummaryRequest request,
+    IModelGateway modelGateway,
+    CancellationToken cancellationToken) =>
+{
+    var response = await modelGateway.CompleteJsonAsync<StorySummaryResponse>(
+        "travel-story-summary",
+        request,
+        cancellationToken);
+
+    return Results.Ok(response);
+})
+.WithName("GenerateStorySummary");
+
+app.MapPost("/api/speech/synthesize", async (
+    SpeechSynthesisRequest request,
+    ITextToSpeechGateway speechGateway,
+    CancellationToken cancellationToken) =>
+{
+    var audio = await speechGateway.SynthesizeAsync(
+        request.Text,
+        request.LanguageCode,
+        request.VoiceName,
+        cancellationToken);
+
+    return Results.File(audio.Content, audio.ContentType, $"travelmate-story.{audio.FileExtension}");
+})
+.WithName("SynthesizeSpeech");
 
 app.Run();
 

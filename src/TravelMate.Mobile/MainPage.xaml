@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TravelMate.Mobile.MainPage"
+             Title="TravelMate">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="22" Spacing="18">
+            <Label
+                Text="TravelMate"
+                Style="{StaticResource Headline}"
+                SemanticProperties.HeadingLevel="Level1" />
+
+            <Label
+                Text="Nearby stories for the road ahead"
+                Style="{StaticResource SubHeadline}"
+                SemanticProperties.HeadingLevel="Level2" />
+
+            <Button
+                Text="Find stories near me"
+                Clicked="OnFindStoriesClicked"
+                HorizontalOptions="Fill" />
+
+            <Label
+                x:Name="StatusLabel"
+                Text="Use travel mode to fetch your location and ask the API for nearby stories."
+                FontSize="14" />
+
+            <Border StrokeThickness="1" Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label
+                        x:Name="PlaceLabel"
+                        Text="No story selected"
+                        FontAttributes="Bold"
+                        FontSize="18" />
+                    <Label
+                        x:Name="StoryTitleLabel"
+                        Text=""
+                        FontSize="16" />
+                    <Label
+                        x:Name="StoryDescriptionLabel"
+                        Text=""
+                        FontSize="14" />
+                    <HorizontalStackLayout Spacing="10">
+                        <Button
+                            Text="Interested"
+                            Clicked="OnInterestedClicked" />
+                        <Button
+                            Text="Skip"
+                            Clicked="OnSkipClicked" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

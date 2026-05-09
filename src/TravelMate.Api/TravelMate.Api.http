@@ -9,3 +9,36 @@ GET {{TravelMate.Api_HostAddress}}/api/stories/nearby?userId=demo-user&lat=13.37
 Accept: application/json
 
 ###
+
+GET {{TravelMate.Api_HostAddress}}/api/places
+Accept: application/json
+
+###
+
+GET {{TravelMate.Api_HostAddress}}/api/preferences/demo-user
+Accept: application/json
+
+###
+
+POST {{TravelMate.Api_HostAddress}}/api/ai/story-summary
+Content-Type: application/json
+
+{
+  "placeName": "Nandi Hills",
+  "sourceText": "Nandi Hills is known for sunrise views, old fort walls, temples, and stories connected to Tipu Sultan.",
+  "languageCode": "en",
+  "maxWords": 80
+}
+
+###
+
+POST {{TravelMate.Api_HostAddress}}/api/speech/synthesize
+Content-Type: application/json
+
+{
+  "text": "You are near Nandi Hills. Would you like to hear the story?",
+  "languageCode": "en-US",
+  "voiceName": "en-US-JennyNeural"
+}
+
+###
