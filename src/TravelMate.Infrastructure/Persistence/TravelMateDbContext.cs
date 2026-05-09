@@ -7,6 +7,7 @@ public sealed class TravelMateDbContext(DbContextOptions<TravelMateDbContext> op
     public DbSet<PlaceEntity> Places => Set<PlaceEntity>();
     public DbSet<StoryEntity> Stories => Set<StoryEntity>();
     public DbSet<UserPreferenceEntity> UserPreferences => Set<UserPreferenceEntity>();
+    public DbSet<UserConsentEntity> UserConsents => Set<UserConsentEntity>();
     public DbSet<PlaybackEventEntity> PlaybackEvents => Set<PlaybackEventEntity>();
     public DbSet<SubscriptionEntity> Subscriptions => Set<SubscriptionEntity>();
     public DbSet<ContributionEntity> Contributions => Set<ContributionEntity>();
@@ -43,6 +44,13 @@ public sealed class TravelMateDbContext(DbContextOptions<TravelMateDbContext> op
             entity.Property(preference => preference.UserId).HasMaxLength(100);
             entity.Property(preference => preference.InterestsJson).IsRequired();
             entity.Property(preference => preference.PreferredLanguageCode).HasMaxLength(10).IsRequired();
+        });
+
+        modelBuilder.Entity<UserConsentEntity>(entity =>
+        {
+            entity.HasKey(consent => consent.UserId);
+            entity.Property(consent => consent.UserId).HasMaxLength(100);
+            entity.HasIndex(consent => consent.UpdatedAt);
         });
 
         modelBuilder.Entity<PlaybackEventEntity>(entity =>
@@ -114,6 +122,15 @@ public sealed class UserPreferenceEntity
     public string UserId { get; set; } = string.Empty;
     public string InterestsJson { get; set; } = "{}";
     public string PreferredLanguageCode { get; set; } = "en";
+}
+
+public sealed class UserConsentEntity
+{
+    public string UserId { get; set; } = string.Empty;
+    public bool LocationConsent { get; set; }
+    public bool VoiceConsent { get; set; }
+    public bool PersonalizationConsent { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 }
 
 public sealed class PlaybackEventEntity

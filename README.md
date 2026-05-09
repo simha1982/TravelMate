@@ -7,6 +7,7 @@ The MVP backend is a C#/.NET API that can:
 - Return nearby travel stories from GPS coordinates.
 - Rank stories using distance, content quality, and user interests.
 - Save user preferences.
+- Store explicit location, voice, and personalization consent.
 - Capture playback feedback such as played, skipped, and interested.
 - Answer a simple "tell me about this place" conversation request.
 - Store data through EF Core using SQL Server in Azure or an in-memory database locally.
@@ -14,6 +15,7 @@ The MVP backend is a C#/.NET API that can:
 - Save generated story audio to local disk or Azure Blob Storage.
 - Index and search curated stories through local in-memory search or Azure AI Search.
 - Accept user story contributions and create moderation review records.
+- Enforce free vs premium story playback entitlements.
 - Run a .NET MAUI Android-first mobile app for location, nearby story prompts, and feedback.
 
 ## Solution Structure
@@ -83,7 +85,8 @@ Set these values for Azure-backed development:
   },
   "AudioStorage": {
     "ConnectionString": "<storage-connection-string>",
-    "ContainerName": "story-audio"
+    "ContainerName": "story-audio",
+    "SasHours": 12
   },
   "AzureSearch": {
     "Endpoint": "https://<search-service>.search.windows.net",
@@ -93,6 +96,11 @@ Set these values for Azure-backed development:
   "Auth": {
     "RequireApiKey": true,
     "ApiKey": "<temporary-api-key>"
+  },
+  "AzureAdB2C": {
+    "Enabled": true,
+    "Authority": "https://<tenant>.b2clogin.com/<tenant>.onmicrosoft.com/<policy>/v2.0",
+    "Audience": "<api-client-id>"
   }
 }
 ```
@@ -101,12 +109,11 @@ Use `appsettings.Local.json`, user secrets, Key Vault, or pipeline secrets for r
 
 ## Next Build Steps
 
-1. Replace optional API-key gate with Entra ID B2C JWT validation.
-2. Create the Azure AI Search index schema during deployment.
-3. Add real Blob SAS playback URLs for mobile audio.
-4. Add payment/subscription entitlements.
-5. Add human moderator portal.
-6. Add richer MAUI audio playback and voice command UX.
+1. Add human moderator portal.
+2. Add EF Core migrations for Azure SQL rollout.
+3. Add richer MAUI audio playback and voice command UX.
+4. Add AI call audit logging and cost tracking.
+5. Add synthetic route tests for the pilot geography.
 
 ## Infrastructure
 

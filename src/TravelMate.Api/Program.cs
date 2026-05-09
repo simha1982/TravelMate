@@ -123,6 +123,8 @@ app.MapGet("/", () => Results.Ok(new
         "GET /api/stories/nearby",
         "GET /api/preferences/{userId}",
         "POST /api/preferences",
+        "GET /api/users/{userId}/consents",
+        "POST /api/users/{userId}/consents",
         "POST /api/stories/{storyId}/playback-events",
         "POST /api/conversation/message",
         "GET /api/subscriptions/{userId}/entitlements",
@@ -192,6 +194,34 @@ app.MapPost("/api/preferences", async (
     return Results.NoContent();
 })
 .WithName("SavePreferences");
+
+app.MapGet("/api/users/{userId}/consents", async (
+    string userId,
+    IUserConsentRepository repository,
+    CancellationToken cancellationToken) =>
+{
+    var consent = await repository.GetAsync(userId, cancellationToken);
+    return Results.Ok(consent);
+})
+.WithName("GetUserConsents");
+
+app.MapPost("/api/users/{userId}/consents", async (
+    string userId,
+    SaveUserConsentRequest request,
+    IUserConsentRepository repository,
+    CancellationToken cancellationToken) =>
+{
+    var consent = new UserConsent(
+        userId,
+        request.LocationConsent,
+        request.VoiceConsent,
+        request.PersonalizationConsent,
+        DateTimeOffset.UtcNow);
+
+    await repository.SaveAsync(consent, cancellationToken);
+    return Results.Ok(consent);
+})
+.WithName("SaveUserConsents");
 
 app.MapPost("/api/stories/{storyId:guid}/playback-events", async (
     Guid storyId,
