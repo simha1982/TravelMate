@@ -16,6 +16,7 @@ The MVP backend is a C#/.NET API that can:
 - Index and search curated stories through local in-memory search or Azure AI Search.
 - Accept user story contributions and create moderation review records.
 - Enforce free vs premium story playback entitlements.
+- Provide a C# Razor Pages admin portal for human moderation decisions.
 - Run a .NET MAUI Android-first mobile app for location, nearby story prompts, and feedback.
 
 ## Solution Structure
@@ -30,6 +31,7 @@ TravelMate/
     |-- TravelMate.Infrastructure
     |-- TravelMate.AI
     |-- TravelMate.Workers
+    |-- TravelMate.Admin
     `-- TravelMate.Mobile
 tests/
 `-- TravelMate.Tests
@@ -60,6 +62,14 @@ Run tests:
 ```powershell
 dotnet test .\TravelMate.sln
 ```
+
+Run the admin moderation portal after starting the API:
+
+```powershell
+dotnet run --project .\src\TravelMate.Admin\TravelMate.Admin.csproj --urls http://localhost:5075
+```
+
+Open `http://localhost:5075/` to review submitted contributions and approve or reject them.
 
 ## Configuration
 
@@ -109,11 +119,11 @@ Use `appsettings.Local.json`, user secrets, Key Vault, or pipeline secrets for r
 
 ## Next Build Steps
 
-1. Add human moderator portal.
-2. Add EF Core migrations for Azure SQL rollout.
-3. Add richer MAUI audio playback and voice command UX.
-4. Add AI call audit logging and cost tracking.
-5. Add synthetic route tests for the pilot geography.
+1. Add EF Core migrations for Azure SQL rollout.
+2. Add richer MAUI audio playback and voice command UX.
+3. Add AI call audit logging and cost tracking.
+4. Add synthetic route tests for the pilot geography.
+5. Add production deployment pipeline stages for API and admin portal.
 
 ## Infrastructure
 

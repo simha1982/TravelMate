@@ -1,0 +1,87 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Moderation";
+}
+
+<section class="page-heading">
+    <div>
+        <h1>Moderation Queue</h1>
+        <p>Review contributed stories, AI validation notes, and publish decisions.</p>
+    </div>
+    <div class="queue-count">
+        <span>@Model.Items.Count</span>
+        <small>pending</small>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="notice notice-success">@Model.StatusMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="notice notice-error">@Model.ErrorMessage</div>
+}
+
+@if (Model.Items.Count == 0 && string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="empty-state">
+        <h2>No contributions waiting</h2>
+        <p>The queue is clear. Newly submitted stories will appear here after AI review.</p>
+    </div>
+}
+
+<div class="moderation-list">
+    @foreach (var item in Model.Items)
+    {
+        var latestResult = item.Results.FirstOrDefault();
+        <article class="moderation-row">
+            <div class="story-main">
+                <div class="row-meta">
+                    <span>@item.Contribution.PlaceName</span>
+                    <span>@item.Contribution.LanguageCode</span>
+                    <span>@item.Contribution.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
+                </div>
+                <h2>@item.Contribution.Title</h2>
+                <p class="story-text">@item.Contribution.StoryText</p>
+                <dl class="story-facts">
+                    <div>
+                        <dt>Contributor</dt>
+                        <dd>@item.Contribution.ContributorUserId</dd>
+                    </div>
+                    <div>
+                        <dt>Location</dt>
+                        <dd>@item.Contribution.Location.Latitude.ToString("0.0000"), @item.Contribution.Location.Longitude.ToString("0.0000")</dd>
+                    </div>
+                    <div>
+                        <dt>Status</dt>
+                        <dd>@item.Contribution.Status</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <aside class="review-panel">
+                <div class="review-state @(latestResult?.Passed == true ? "passed" : "flagged")">
+                    @(latestResult?.Passed == true ? "AI passed" : "Needs review")
+                </div>
+                <p>@(latestResult?.Summary ?? "No AI review is attached yet.")</p>
+                @if (latestResult?.Flags.Length > 0)
+                {
+                    <ul class="flag-list">
+                        @foreach (var flag in latestResult.Flags)
+                        {
+                            <li>@flag</li>
+                        }
+                    </ul>
+                }
+                <form method="post" class="actions">
+                    <input type="hidden" name="contributionId" value="@item.Contribution.Id" />
+                    <button type="submit" asp-page-handler="Approve" class="btn-approve">Approve</button>
+                    <button type="submit" asp-page-handler="Reject" class="btn-reject">Reject</button>
+                </form>
+            </aside>
+        </article>
+    }
+</div>
