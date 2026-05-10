@@ -138,6 +138,11 @@ body {
   gap: 1rem;
 }
 
+.story-list {
+  display: grid;
+  gap: 1rem;
+}
+
 .moderation-row {
   display: grid;
   gap: 1rem;
@@ -255,11 +260,84 @@ body {
   background: var(--danger);
 }
 
+.story-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  padding: 1rem;
+}
+
+.story-card-main h2 {
+  font-size: 1.15rem;
+  font-weight: 750;
+  margin: 0.45rem 0;
+}
+
+.story-card-main p {
+  color: #334155;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.story-card-side {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.story-card-side dl {
+  display: grid;
+  gap: 0.8rem;
+  margin: 0;
+}
+
+.story-card-side dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.story-card-side dd {
+  font-weight: 650;
+  margin: 0.15rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.story-card-side a {
+  color: #0f6f72;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+}
+
+.chip {
+  background: #eef7f7;
+  border: 1px solid #cbe5e5;
+  border-radius: 6px;
+  color: #0f6f72;
+  font-size: 0.78rem;
+  font-weight: 750;
+  padding: 0.25rem 0.45rem;
+}
+
 .metric-grid {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   margin-bottom: 1rem;
+}
+
+.metric-grid.compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .metric-card {
@@ -347,6 +425,7 @@ body {
 
 @media (max-width: 900px) {
   .moderation-row,
+  .story-card,
   .story-facts,
   .metric-grid {
     grid-template-columns: 1fr;

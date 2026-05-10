@@ -1,0 +1,87 @@
+@page
+@model StoriesModel
+@{
+    ViewData["Title"] = "Stories";
+}
+
+<section class="page-heading">
+    <div>
+        <h1>Stories</h1>
+        <p>Browse seeded and curated TravelMate story content.</p>
+    </div>
+    <div class="queue-count">
+        <span>@Model.Summary.StoryCount</span>
+        <small>stories</small>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="notice notice-error">@Model.ErrorMessage</div>
+}
+
+<section class="metric-grid compact">
+    <article class="metric-card">
+        <span>Places</span>
+        <strong>@Model.Summary.PlaceCount</strong>
+    </article>
+    <article class="metric-card">
+        <span>Wikipedia</span>
+        <strong>@Model.Summary.WikipediaStoryCount</strong>
+    </article>
+    <article class="metric-card">
+        <span>Languages</span>
+        <strong>@Model.Stories.Select(item => item.Story.LanguageCode).Distinct().Count()</strong>
+    </article>
+</section>
+
+@if (Model.Stories.Count == 0 && string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="empty-state">
+        <h2>No stories found</h2>
+        <p>Seeded stories will appear here after the API starts.</p>
+    </div>
+}
+else
+{
+    <div class="story-list">
+        @foreach (var row in Model.Stories)
+        {
+            <article class="story-card">
+                <div class="story-card-main">
+                    <div class="row-meta">
+                        <span>@(row.Place?.Region ?? "Unknown region")</span>
+                        <span>@(row.Place?.Name ?? "Unknown place")</span>
+                        <span>@row.Story.LanguageCode</span>
+                    </div>
+                    <h2>@row.Story.Title</h2>
+                    <p>@row.Story.ShortDescription</p>
+                    <div class="chip-row">
+                        @foreach (var category in row.Story.Categories)
+                        {
+                            <span class="chip">@category</span>
+                        }
+                    </div>
+                </div>
+                <aside class="story-card-side">
+                    <dl>
+                        <div>
+                            <dt>Quality</dt>
+                            <dd>@row.Story.QualityScore</dd>
+                        </div>
+                        <div>
+                            <dt>Source</dt>
+                            <dd>
+                                <a href="@row.Story.SourceUrl" target="_blank" rel="noreferrer">@row.Story.SourceName</a>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Audio</dt>
+                            <dd>@(string.IsNullOrWhiteSpace(row.Story.AudioUrl) ? "Not generated" : "Available")</dd>
+                        </div>
+                    </dl>
+                </aside>
+            </article>
+        }
+    </div>
+}

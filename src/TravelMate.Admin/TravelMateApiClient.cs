@@ -4,6 +4,20 @@ namespace TravelMate.Admin;
 
 public sealed class TravelMateApiClient(HttpClient httpClient, IConfiguration configuration)
 {
+    public async Task<IReadOnlyCollection<PlaceDto>> GetPlacesAsync(CancellationToken cancellationToken)
+    {
+        return await httpClient.GetFromJsonAsync<PlaceDto[]>(
+            "/api/places",
+            cancellationToken) ?? [];
+    }
+
+    public async Task<IReadOnlyCollection<StoryDto>> GetStoriesAsync(CancellationToken cancellationToken)
+    {
+        return await httpClient.GetFromJsonAsync<StoryDto[]>(
+            "/api/stories",
+            cancellationToken) ?? [];
+    }
+
     public async Task<IReadOnlyCollection<AiAuditEventDto>> GetAiAuditEventsAsync(
         int limit,
         CancellationToken cancellationToken)
@@ -70,6 +84,26 @@ public sealed record ContributionDto(
     DateTimeOffset SubmittedAt);
 
 public sealed record GeoPointDto(double Latitude, double Longitude);
+
+public sealed record PlaceDto(
+    Guid Id,
+    string Name,
+    string Country,
+    string Region,
+    GeoPointDto Location,
+    string[] Categories);
+
+public sealed record StoryDto(
+    Guid Id,
+    Guid PlaceId,
+    string Title,
+    string ShortDescription,
+    string LanguageCode,
+    string[] Categories,
+    string SourceName,
+    string SourceUrl,
+    string? AudioUrl,
+    int QualityScore);
 
 public sealed record ModerationResultDto(
     Guid Id,
