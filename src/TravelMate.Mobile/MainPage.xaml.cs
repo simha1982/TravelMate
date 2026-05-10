@@ -17,6 +17,7 @@ public partial class MainPage : ContentPage
     ];
 
     private NearbyStoryDto? selectedStory;
+    private string? lastAnswer;
 
     public MainPage(TravelMateApiClient apiClient)
     {
@@ -25,6 +26,9 @@ public partial class MainPage : ContentPage
         DemoLocationPicker.ItemsSource = demoLocations;
         DemoLocationPicker.ItemDisplayBinding = new Binding(nameof(DemoLocation.Name));
         DemoLocationPicker.SelectedIndex = 0;
+        LanguagePicker.ItemsSource = new List<string> { "en", "hi", "te", "de" };
+        LanguagePicker.SelectedIndex = 0;
+        UpdateMapPreview(demoLocations[0].Latitude, demoLocations[0].Longitude, demoLocations[0].Name);
     }
 
     private async void OnFindStoriesClicked(object? sender, EventArgs e)
@@ -49,6 +53,16 @@ public partial class MainPage : ContentPage
                 5_000,
                 $"Current GPS {location.Latitude:0.0000}, {location.Longitude:0.0000}");
         }
+        catch (FeatureNotEnabledException)
+        {
+            StatusLabel.Text = "Location is disabled. Use a demo location for desk testing.";
+            await LoadSelectedDemoLocationAsync();
+        }
+        catch (PermissionException)
+        {
+            StatusLabel.Text = "Location permission was denied. Use a demo location for desk testing.";
+            await LoadSelectedDemoLocationAsync();
+        }
         catch (Exception ex)
         {
             StatusLabel.Text = $"Could not load stories: {ex.Message}";
@@ -56,6 +70,17 @@ public partial class MainPage : ContentPage
     }
 
     private async void OnLoadDemoLocationClicked(object? sender, EventArgs e)
+    {
+        if (DemoLocationPicker.SelectedItem is not DemoLocation demoLocation)
+        {
+            StatusLabel.Text = "Choose a demo location first.";
+            return;
+        }
+
+        await LoadSelectedDemoLocationAsync();
+    }
+
+    private async Task LoadSelectedDemoLocationAsync()
     {
         if (DemoLocationPicker.SelectedItem is not DemoLocation demoLocation)
         {
@@ -78,6 +103,7 @@ public partial class MainPage : ContentPage
     {
         StatusLabel.Text = $"Looking near {latitude:0.0000}, {longitude:0.0000}...";
         LocationLabel.Text = $"{locationName} - {latitude:0.0000}, {longitude:0.0000}";
+        UpdateMapPreview(latitude, longitude, locationName);
 
         var stories = await apiClient.GetNearbyStoriesAsync(
             latitude,
@@ -175,6 +201,11 @@ public partial class MainPage : ContentPage
         await SaveFeedbackAsync("Skipped");
     }
 
+    private async void OnNotInterestedClicked(object? sender, EventArgs e)
+    {
+        await SaveFeedbackAsync("NotInterested");
+    }
+
     private async void OnVoiceCommandClicked(object? sender, EventArgs e)
     {
         var command = VoiceCommandEntry.Text?.Trim().ToLowerInvariant();
@@ -227,12 +258,105 @@ public partial class MainPage : ContentPage
         {
             AnswerLabel.Text = "Thinking...";
             var answer = await apiClient.AskAsync(question, CancellationToken.None);
-            AnswerLabel.Text = answer?.Answer ?? "No answer returned.";
+            lastAnswer = answer?.Answer;
+            AnswerLabel.Text = lastAnswer ?? "No answer returned.";
         }
         catch (Exception ex)
         {
             AnswerLabel.Text = $"Could not answer yet: {ex.Message}";
         }
+    }
+
+    private async void OnPlayAnswerClicked(object? sender, EventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(lastAnswer))
+        {
+            StatusLabel.Text = "Ask TravelMate a question before playing an answer.";
+            return;
+        }
+
+        try
+        {
+            StatusLabel.Text = "Preparing spoken answer...";
+            var language = LanguagePicker.SelectedItem as string ?? "en";
+            var audioFile = await apiClient.SynthesizeToLocalFileAsync(lastAnswer, language, CancellationToken.None);
+            StoryPlayer.Source = MediaSource.FromFile(audioFile);
+            StoryPlayer.MetadataTitle = "TravelMate answer";
+            StoryPlayer.MetadataArtist = "TravelMate";
+            StoryPlayer.Play();
+            StatusLabel.Text = "Playing spoken answer.";
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Could not play answer audio: {ex.Message}";
+        }
+    }
+
+    private async void OnSavePreferencesClicked(object? sender, EventArgs e)
+    {
+        var interests = new Dictionary<string, double>
+        {
+            ["history"] = HistoryPreference.IsChecked ? 0.9 : 0.15,
+            ["nature"] = NaturePreference.IsChecked ? 0.85 : 0.15,
+            ["architecture"] = ArchitecturePreference.IsChecked ? 0.8 : 0.15,
+            ["cricket"] = CricketPreference.IsChecked ? 0.9 : 0.15,
+            ["food"] = FoodPreference.IsChecked ? 0.8 : 0.15,
+            ["culture"] = CulturePreference.IsChecked ? 0.85 : 0.15
+        };
+
+        try
+        {
+            var language = LanguagePicker.SelectedItem as string ?? "en";
+            await apiClient.SavePreferencesAsync(interests, language, CancellationToken.None);
+            StatusLabel.Text = "Saved demo preferences.";
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Could not save preferences: {ex.Message}";
+        }
+    }
+
+    private async void OnSaveConsentClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            await apiClient.SaveConsentAsync(
+                LocationConsentSwitch.IsToggled,
+                VoiceConsentSwitch.IsToggled,
+                PersonalizationConsentSwitch.IsToggled,
+                CancellationToken.None);
+            StatusLabel.Text = "Saved consent settings.";
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Could not save consent: {ex.Message}";
+        }
+    }
+
+    private void UpdateMapPreview(double latitude, double longitude, string label)
+    {
+        var encodedLabel = System.Net.WebUtility.HtmlEncode(label);
+        MapPreview.Source = new HtmlWebViewSource
+        {
+            Html = $$"""
+                <!doctype html>
+                <html>
+                <body style="margin:0;font-family:Segoe UI,Arial,sans-serif;background:#eef5f5;">
+                  <iframe
+                    width="100%"
+                    height="145"
+                    style="border:0"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    src="https://www.openstreetmap.org/export/embed.html?bbox={{longitude - 0.02}}%2C{{latitude - 0.02}}%2C{{longitude + 0.02}}%2C{{latitude + 0.02}}&layer=mapnik&marker={{latitude}}%2C{{longitude}}">
+                  </iframe>
+                  <div style="padding:6px 8px;color:#1f2937;font-size:12px;">
+                    {{encodedLabel}} - {{latitude:0.0000}}, {{longitude:0.0000}}
+                  </div>
+                </body>
+                </html>
+                """
+        };
     }
 }
 

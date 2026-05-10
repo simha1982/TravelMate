@@ -34,3 +34,13 @@ public sealed record SearchableStoryDto(
     string[] Categories,
     string SourceName,
     string SourceUrl);
+
+public sealed record UserPreferenceRequest(
+    string UserId,
+    IReadOnlyDictionary<string, double> Interests,
+    string PreferredLanguageCode);
+
+public sealed record SaveUserConsentRequest(
+    bool LocationConsent,
+    bool VoiceConsent,
+    bool PersonalizationConsent);

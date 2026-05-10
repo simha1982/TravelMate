@@ -34,6 +34,9 @@
                         x:Name="LocationLabel"
                         Text="No location selected yet."
                         FontSize="13" />
+                    <WebView
+                        x:Name="MapPreview"
+                        HeightRequest="180" />
                 </VerticalStackLayout>
             </Border>
 
@@ -117,6 +120,9 @@
                             Text="Interested"
                             Clicked="OnInterestedClicked" />
                         <Button
+                            Text="Not interested"
+                            Clicked="OnNotInterestedClicked" />
+                        <Button
                             Text="Skip"
                             Clicked="OnSkipClicked" />
                     </HorizontalStackLayout>
@@ -144,6 +150,75 @@
                 x:Name="AnswerLabel"
                 Text=""
                 FontSize="14" />
+
+            <Button
+                Text="Play answer"
+                Clicked="OnPlayAnswerClicked" />
+
+            <Border StrokeThickness="1" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label
+                        Text="Preferences"
+                        FontAttributes="Bold"
+                        FontSize="16" />
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+                        <HorizontalStackLayout Spacing="6">
+                            <CheckBox x:Name="HistoryPreference" IsChecked="True" />
+                            <Label Text="History" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Grid.Column="1" Spacing="6">
+                            <CheckBox x:Name="NaturePreference" IsChecked="True" />
+                            <Label Text="Nature" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Grid.Row="1" Spacing="6">
+                            <CheckBox x:Name="ArchitecturePreference" IsChecked="True" />
+                            <Label Text="Architecture" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="6">
+                            <CheckBox x:Name="CricketPreference" />
+                            <Label Text="Cricket" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Grid.Row="2" Spacing="6">
+                            <CheckBox x:Name="FoodPreference" />
+                            <Label Text="Food" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Grid.Row="2" Grid.Column="1" Spacing="6">
+                            <CheckBox x:Name="CulturePreference" IsChecked="True" />
+                            <Label Text="Culture" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </Grid>
+                    <Picker
+                        x:Name="LanguagePicker"
+                        Title="Preferred language" />
+                    <Button
+                        Text="Save preferences"
+                        Clicked="OnSavePreferencesClicked" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border StrokeThickness="1" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label
+                        Text="Privacy and consent"
+                        FontAttributes="Bold"
+                        FontSize="16" />
+                    <HorizontalStackLayout Spacing="8">
+                        <Switch x:Name="LocationConsentSwitch" IsToggled="True" />
+                        <Label Text="Location" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="8">
+                        <Switch x:Name="VoiceConsentSwitch" />
+                        <Label Text="Voice" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="8">
+                        <Switch x:Name="PersonalizationConsentSwitch" IsToggled="True" />
+                        <Label Text="Personalization" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <Button
+                        Text="Save consent"
+                        Clicked="OnSaveConsentClicked" />
+                </VerticalStackLayout>
+            </Border>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

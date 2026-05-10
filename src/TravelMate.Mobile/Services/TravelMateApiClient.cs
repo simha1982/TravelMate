@@ -52,6 +52,52 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         return await response.Content.ReadFromJsonAsync<RagAnswerResponse>(cancellationToken);
     }
 
+    public async Task SavePreferencesAsync(
+        IReadOnlyDictionary<string, double> interests,
+        string preferredLanguageCode,
+        CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PostAsJsonAsync(
+            "api/preferences",
+            new UserPreferenceRequest(DemoUserId, interests, preferredLanguageCode),
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task SaveConsentAsync(
+        bool locationConsent,
+        bool voiceConsent,
+        bool personalizationConsent,
+        CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PostAsJsonAsync(
+            $"api/users/{DemoUserId}/consents",
+            new SaveUserConsentRequest(locationConsent, voiceConsent, personalizationConsent),
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<string> SynthesizeToLocalFileAsync(
+        string text,
+        string languageCode,
+        CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PostAsJsonAsync(
+            "api/speech/synthesize",
+            new SpeechSynthesisRequest(text, NormalizeLanguage(languageCode)),
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var extension = response.Content.Headers.ContentType?.MediaType?.Contains("mpeg", StringComparison.OrdinalIgnoreCase) == true
+            ? "mp3"
+            : "txt";
+        var fileName = $"travelmate-answer-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}.{extension}";
+        var path = Path.Combine(FileSystem.CacheDirectory, fileName);
+        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        await File.WriteAllBytesAsync(path, bytes, cancellationToken);
+        return path;
+    }
+
     private static string NormalizeLanguage(string languageCode) =>
         languageCode.Equals("en", StringComparison.OrdinalIgnoreCase) ? "en-US" : languageCode;
 }
