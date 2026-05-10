@@ -14,6 +14,13 @@ public sealed record NearbyStoryDto(
 
 public sealed record PlaybackEventRequest(string UserId, string Action);
 
+public sealed record SpeechSynthesisRequest(
+    string Text,
+    string LanguageCode = "en-US",
+    string VoiceName = "en-US-JennyNeural");
+
+public sealed record StoredAudio(string Url, string ContentType, long SizeBytes);
+
 public sealed record RagAnswerRequest(string Question, string UserId = "demo-user", int Top = 3);
 
 public sealed record RagAnswerResponse(string Answer, SearchableStoryDto[] Sources);

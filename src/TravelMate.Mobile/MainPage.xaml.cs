@@ -63,6 +63,40 @@ public partial class MainPage : ContentPage
         await SaveFeedbackAsync("Interested");
     }
 
+    private async void OnPlayClicked(object? sender, EventArgs e)
+    {
+        if (selectedStory is null)
+        {
+            StatusLabel.Text = "Find a story before playing audio.";
+            return;
+        }
+
+        try
+        {
+            StatusLabel.Text = "Preparing story audio...";
+            var audioUrl = selectedStory.AudioUrl;
+            if (string.IsNullOrWhiteSpace(audioUrl))
+            {
+                var generated = await apiClient.GenerateStoryAudioAsync(selectedStory, CancellationToken.None);
+                audioUrl = generated?.Url;
+            }
+
+            if (string.IsNullOrWhiteSpace(audioUrl))
+            {
+                StatusLabel.Text = "Audio is not available for this story yet.";
+                return;
+            }
+
+            await apiClient.SavePlaybackEventAsync(selectedStory.StoryId, "Played", CancellationToken.None);
+            await Launcher.Default.OpenAsync(new Uri(audioUrl, UriKind.RelativeOrAbsolute));
+            StatusLabel.Text = "Opened story audio.";
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Could not play story audio: {ex.Message}";
+        }
+    }
+
     private async void OnSkipClicked(object? sender, EventArgs e)
     {
         await SaveFeedbackAsync("Skipped");

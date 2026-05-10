@@ -43,6 +43,9 @@
                         FontSize="14" />
                     <HorizontalStackLayout Spacing="10">
                         <Button
+                            Text="Play"
+                            Clicked="OnPlayClicked" />
+                        <Button
                             Text="Interested"
                             Clicked="OnInterestedClicked" />
                         <Button

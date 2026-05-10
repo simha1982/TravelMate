@@ -30,6 +30,18 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task<StoredAudio?> GenerateStoryAudioAsync(
+        NearbyStoryDto story,
+        CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PostAsJsonAsync(
+            $"api/stories/{story.StoryId}/audio",
+            new SpeechSynthesisRequest(story.ShortDescription, NormalizeLanguage(story.LanguageCode)),
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<StoredAudio>(cancellationToken);
+    }
+
     public async Task<RagAnswerResponse?> AskAsync(string question, CancellationToken cancellationToken)
     {
         using var response = await httpClient.PostAsJsonAsync(
@@ -39,4 +51,7 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<RagAnswerResponse>(cancellationToken);
     }
+
+    private static string NormalizeLanguage(string languageCode) =>
+        languageCode.Equals("en", StringComparison.OrdinalIgnoreCase) ? "en-US" : languageCode;
 }
