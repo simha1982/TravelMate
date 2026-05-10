@@ -17,6 +17,26 @@
                 Style="{StaticResource SubHeadline}"
                 SemanticProperties.HeadingLevel="Level2" />
 
+            <Border StrokeThickness="1" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label
+                        Text="Demo location"
+                        FontAttributes="Bold"
+                        FontSize="16" />
+                    <Picker
+                        x:Name="DemoLocationPicker"
+                        Title="Choose a demo place" />
+                    <Button
+                        Text="Load demo stories"
+                        Clicked="OnLoadDemoLocationClicked"
+                        HorizontalOptions="Fill" />
+                    <Label
+                        x:Name="LocationLabel"
+                        Text="No location selected yet."
+                        FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
             <Button
                 Text="Find stories near me"
                 Clicked="OnFindStoriesClicked"
@@ -26,6 +46,48 @@
                 x:Name="StatusLabel"
                 Text="Use travel mode to fetch your location and ask the API for nearby stories."
                 FontSize="14" />
+
+            <CollectionView
+                x:Name="StoriesCollection"
+                HeightRequest="360"
+                SelectionMode="Single"
+                SelectionChanged="OnStorySelectionChanged">
+                <CollectionView.EmptyView>
+                    <Label
+                        Text="Nearby story cards will appear here."
+                        FontSize="14" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border StrokeThickness="1" Padding="14" Margin="0,0,0,10">
+                            <VerticalStackLayout Spacing="6">
+                                <Label
+                                    Text="{Binding PlaceName}"
+                                    FontAttributes="Bold"
+                                    FontSize="15" />
+                                <Label
+                                    Text="{Binding Title}"
+                                    FontAttributes="Bold"
+                                    FontSize="17" />
+                                <Label
+                                    Text="{Binding ShortDescription}"
+                                    FontSize="13" />
+                                <HorizontalStackLayout Spacing="12">
+                                    <Label
+                                        Text="{Binding DistanceMeters, StringFormat='{0:0} m'}"
+                                        FontSize="12" />
+                                    <Label
+                                        Text="{Binding Score, StringFormat='Score {0:0.00}'}"
+                                        FontSize="12" />
+                                    <Label
+                                        Text="{Binding SourceName}"
+                                        FontSize="12" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
             <Border StrokeThickness="1" Padding="16">
                 <VerticalStackLayout Spacing="10">
