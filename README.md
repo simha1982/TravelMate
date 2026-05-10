@@ -128,10 +128,10 @@ Use `appsettings.Local.json`, user secrets, Key Vault, or pipeline secrets for r
 ## Next Build Steps
 
 1. Add richer MAUI audio playback and voice command UX.
-2. Add synthetic route tests for the pilot geography.
-3. Add production deployment pipeline stages for API and admin portal.
-4. Add Key Vault secret references for SQL, Azure OpenAI, Speech, and Search keys.
-5. Add moderator views for AI usage and cost trends.
+2. Add production deployment pipeline stages for API and admin portal.
+3. Add Key Vault secret references for SQL, Azure OpenAI, Speech, and Search keys.
+4. Add moderator views for AI usage and cost trends.
+5. Expand pilot route seed data from 3 places to 20-50 curated places.
 
 ## Infrastructure
 
