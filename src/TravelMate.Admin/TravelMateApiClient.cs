@@ -4,6 +4,15 @@ namespace TravelMate.Admin;
 
 public sealed class TravelMateApiClient(HttpClient httpClient, IConfiguration configuration)
 {
+    public async Task<IReadOnlyCollection<AiAuditEventDto>> GetAiAuditEventsAsync(
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        return await httpClient.GetFromJsonAsync<AiAuditEventDto[]>(
+            $"/api/admin/ai-audit?limit={limit}",
+            cancellationToken) ?? [];
+    }
+
     public async Task<IReadOnlyCollection<ContributionDto>> GetModerationQueueAsync(CancellationToken cancellationToken)
     {
         return await httpClient.GetFromJsonAsync<ContributionDto[]>(
@@ -69,3 +78,15 @@ public sealed record ModerationResultDto(
     string Summary,
     string[] Flags,
     DateTimeOffset ReviewedAt);
+
+public sealed record AiAuditEventDto(
+    Guid Id,
+    string TaskName,
+    string Operation,
+    string Model,
+    int EstimatedTokens,
+    decimal EstimatedCostUsd,
+    int LatencyMilliseconds,
+    bool Succeeded,
+    string? ErrorMessage,
+    DateTimeOffset OccurredAt);

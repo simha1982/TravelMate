@@ -119,6 +119,7 @@ body {
 }
 
 .empty-state {
+  margin-top: 1rem;
   padding: 2rem;
 }
 
@@ -254,9 +255,100 @@ body {
   background: var(--danger);
 }
 
+.metric-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.metric-card span {
+  color: var(--muted);
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+}
+
+.metric-card strong {
+  color: var(--text);
+  display: block;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.table-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.usage-table {
+  border-collapse: collapse;
+  min-width: 940px;
+  width: 100%;
+}
+
+.usage-table th,
+.usage-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 0.9rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.usage-table th {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.usage-table td {
+  color: #334155;
+  font-size: 0.92rem;
+}
+
+.status-pill {
+  border-radius: 6px;
+  display: inline-flex;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 0.28rem 0.45rem;
+  text-transform: uppercase;
+}
+
+.status-pill.passed {
+  background: #e8f7ee;
+  color: var(--success);
+}
+
+.status-pill.failed {
+  background: #fdecec;
+  color: var(--danger);
+}
+
+.error-note {
+  color: var(--danger);
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+}
+
 @media (max-width: 900px) {
   .moderation-row,
-  .story-facts {
+  .story-facts,
+  .metric-grid {
     grid-template-columns: 1fr;
   }
 

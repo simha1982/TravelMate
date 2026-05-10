@@ -1,0 +1,98 @@
+@page
+@model AiUsageModel
+@{
+    ViewData["Title"] = "AI Usage";
+}
+
+<section class="page-heading">
+    <div>
+        <h1>AI Usage</h1>
+        <p>Monitor model calls, latency, estimated tokens, and estimated spend.</p>
+    </div>
+    <div class="queue-count">
+        <span>@Model.Summary.TotalCalls</span>
+        <small>calls</small>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="notice notice-error">@Model.ErrorMessage</div>
+}
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Success</span>
+        <strong>@Model.Summary.Succeeded</strong>
+    </article>
+    <article class="metric-card">
+        <span>Failures</span>
+        <strong>@Model.Summary.Failed</strong>
+    </article>
+    <article class="metric-card">
+        <span>Tokens</span>
+        <strong>@Model.Summary.TotalTokens</strong>
+    </article>
+    <article class="metric-card">
+        <span>Cost</span>
+        <strong>@Model.Summary.TotalCostUsd.ToString("C4")</strong>
+    </article>
+    <article class="metric-card">
+        <span>Avg latency</span>
+        <strong>@Model.Summary.AverageLatencyMilliseconds ms</strong>
+    </article>
+    <article class="metric-card">
+        <span>Tasks</span>
+        <strong>@Model.Summary.UniqueTasks</strong>
+    </article>
+</section>
+
+@if (Model.Events.Count == 0 && string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="empty-state">
+        <h2>No AI calls recorded</h2>
+        <p>Story summaries, RAG answers, and moderation reviews will appear here after they run.</p>
+    </div>
+}
+else
+{
+    <div class="table-panel">
+        <table class="usage-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Task</th>
+                    <th>Operation</th>
+                    <th>Model</th>
+                    <th>Tokens</th>
+                    <th>Cost</th>
+                    <th>Latency</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Events)
+                {
+                    <tr>
+                        <td>@item.OccurredAt.ToLocalTime().ToString("dd MMM HH:mm:ss")</td>
+                        <td>@item.TaskName</td>
+                        <td>@item.Operation</td>
+                        <td>@item.Model</td>
+                        <td>@item.EstimatedTokens</td>
+                        <td>@item.EstimatedCostUsd.ToString("C6")</td>
+                        <td>@item.LatencyMilliseconds ms</td>
+                        <td>
+                            <span class="status-pill @(item.Succeeded ? "passed" : "failed")">
+                                @(item.Succeeded ? "Succeeded" : "Failed")
+                            </span>
+                            @if (!string.IsNullOrWhiteSpace(item.ErrorMessage))
+                            {
+                                <span class="error-note">@item.ErrorMessage</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
