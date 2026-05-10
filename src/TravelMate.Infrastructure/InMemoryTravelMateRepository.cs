@@ -13,7 +13,7 @@ public sealed class InMemoryTravelMateRepository : ITravelMateRepository
     private readonly ConcurrentDictionary<string, UserPreference> preferences = new();
     private readonly ConcurrentBag<PlaybackEvent> playbackEvents = [];
 
-    private readonly IReadOnlyCollection<Place> places =
+    private readonly List<Place> places =
     [
         new Place(
             NandiHillsId,
@@ -38,7 +38,7 @@ public sealed class InMemoryTravelMateRepository : ITravelMateRepository
             ["nature", "scubaDiving", "history"])
     ];
 
-    private readonly IReadOnlyCollection<Story> stories =
+    private readonly List<Story> stories =
     [
         new Story(
             Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd201"),
@@ -76,10 +76,51 @@ public sealed class InMemoryTravelMateRepository : ITravelMateRepository
     ];
 
     public Task<IReadOnlyCollection<Place>> GetPlacesAsync(CancellationToken cancellationToken) =>
-        Task.FromResult(places);
+        Task.FromResult<IReadOnlyCollection<Place>>(places);
 
     public Task<IReadOnlyCollection<Story>> GetStoriesAsync(CancellationToken cancellationToken) =>
-        Task.FromResult(stories);
+        Task.FromResult<IReadOnlyCollection<Story>>(stories);
+
+    public Task<Place> SavePlaceAsync(SavePlaceRequest request, CancellationToken cancellationToken)
+    {
+        var place = new Place(
+            request.Id.GetValueOrDefault(Guid.NewGuid()),
+            request.Name,
+            request.Country,
+            request.Region,
+            new GeoPoint(request.Latitude, request.Longitude),
+            request.Categories);
+
+        places.RemoveAll(item => item.Id == place.Id);
+        places.Add(place);
+        return Task.FromResult(place);
+    }
+
+    public Task<Story> SaveStoryAsync(SaveStoryRequest request, CancellationToken cancellationToken)
+    {
+        var story = new Story(
+            request.Id.GetValueOrDefault(Guid.NewGuid()),
+            request.PlaceId,
+            request.Title,
+            request.ShortDescription,
+            request.LanguageCode,
+            request.Categories,
+            request.SourceName,
+            request.SourceUrl,
+            request.AudioUrl,
+            request.QualityScore);
+
+        stories.RemoveAll(item => item.Id == story.Id);
+        stories.Add(story);
+        return Task.FromResult(story);
+    }
+
+    public Task<Place?> FindPlaceByNameAsync(string placeName, CancellationToken cancellationToken)
+    {
+        var place = places.FirstOrDefault(item =>
+            item.Name.Equals(placeName.Trim(), StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(place);
+    }
 
     public Task<UserPreference> GetPreferenceAsync(string userId, CancellationToken cancellationToken)
     {

@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 var azureAdB2CEnabled = builder.Configuration.GetValue("AzureAdB2C:Enabled", false)
     && !string.IsNullOrWhiteSpace(builder.Configuration["AzureAdB2C:Authority"])
     && !string.IsNullOrWhiteSpace(builder.Configuration["AzureAdB2C:Audience"]);
+var adminAuthEnabled = builder.Configuration.GetValue("AdminAuth:RequireAuthorization", false);
 
 builder.Services.AddOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -28,8 +29,11 @@ if (azureAdB2CEnabled)
             options.Authority = builder.Configuration["AzureAdB2C:Authority"];
             options.Audience = builder.Configuration["AzureAdB2C:Audience"];
         });
-    builder.Services.AddAuthorization();
 }
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
 
 builder.Services.AddTravelMateInfrastructure(builder.Configuration);
 builder.Services.AddHttpClient();
@@ -145,9 +149,56 @@ app.MapGet("/", () => Results.Ok(new
 app.MapGet("/api/auth/status", () => Results.Ok(new
 {
     apiKeyEnabled = app.Configuration.GetValue("Auth:RequireApiKey", false),
-    azureAdB2CEnabled
+    azureAdB2CEnabled,
+    adminAuthEnabled
 }))
 .WithName("AuthStatus");
+
+app.MapGet("/health", async (
+    ITravelMateRepository repository,
+    IStorySearchService searchService,
+    IConfiguration configuration,
+    CancellationToken cancellationToken) =>
+{
+    var checks = new List<HealthCheckStatus>();
+    var databaseHealthy = false;
+    try
+    {
+        var places = await repository.GetPlacesAsync(cancellationToken);
+        databaseHealthy = places.Count >= 0;
+    }
+    catch (Exception ex)
+    {
+        checks.Add(new HealthCheckStatus("database", "unhealthy", ex.Message));
+    }
+
+    if (databaseHealthy)
+    {
+        checks.Add(new HealthCheckStatus("database", "healthy"));
+    }
+
+    checks.Add(new HealthCheckStatus(
+        "search",
+        searchService.GetType().Name.Contains("Azure", StringComparison.OrdinalIgnoreCase)
+            ? "azure-configured"
+            : "local"));
+    checks.Add(new HealthCheckStatus(
+        "storage",
+        string.IsNullOrWhiteSpace(configuration["AudioStorage:ConnectionString"]) ? "local" : "azure-configured"));
+    checks.Add(new HealthCheckStatus(
+        "ai",
+        string.IsNullOrWhiteSpace(configuration["AzureOpenAI:Endpoint"]) ? "local-stub" : "azure-configured"));
+
+    var healthy = checks.All(check => !check.Status.Equals("unhealthy", StringComparison.OrdinalIgnoreCase));
+    return healthy ? Results.Ok(new { status = "healthy", checks }) : Results.Problem("One or more checks failed.", statusCode: 503);
+})
+.WithName("Health");
+
+var adminApi = app.MapGroup("/api/admin");
+if (adminAuthEnabled)
+{
+    adminApi.RequireAuthorization("AdminOnly");
+}
 
 app.MapGet("/api/stories/nearby", async (
     string userId,
@@ -272,7 +323,7 @@ app.MapGet("/api/subscriptions/{userId}/entitlements", async (
 })
 .WithName("GetEntitlements");
 
-app.MapPost("/api/admin/subscriptions", async (
+adminApi.MapPost("/subscriptions", async (
     SaveSubscriptionRequest request,
     EntitlementService entitlementService,
     CancellationToken cancellationToken) =>
@@ -282,7 +333,7 @@ app.MapPost("/api/admin/subscriptions", async (
 })
 .WithName("SaveSubscription");
 
-app.MapGet("/api/admin/ai-audit", async (
+adminApi.MapGet("/ai-audit", async (
     int? limit,
     IAiAuditRepository repository,
     CancellationToken cancellationToken) =>
@@ -291,6 +342,52 @@ app.MapGet("/api/admin/ai-audit", async (
     return Results.Ok(events);
 })
 .WithName("GetAiAuditEvents");
+
+adminApi.MapPost("/places", async (
+    SavePlaceRequest request,
+    ITravelMateRepository repository,
+    CancellationToken cancellationToken) =>
+{
+    var place = await repository.SavePlaceAsync(request, cancellationToken);
+    return Results.Created($"/api/places/{place.Id}", place);
+})
+.WithName("CreatePlace");
+
+adminApi.MapPut("/places/{placeId:guid}", async (
+    Guid placeId,
+    SavePlaceRequest request,
+    ITravelMateRepository repository,
+    CancellationToken cancellationToken) =>
+{
+    var place = await repository.SavePlaceAsync(request with { Id = placeId }, cancellationToken);
+    return Results.Ok(place);
+})
+.WithName("UpdatePlace");
+
+adminApi.MapPost("/stories", async (
+    SaveStoryRequest request,
+    ITravelMateRepository repository,
+    IServiceProvider serviceProvider,
+    CancellationToken cancellationToken) =>
+{
+    var story = await repository.SaveStoryAsync(request, cancellationToken);
+    await SeedSearchAsync(serviceProvider, cancellationToken);
+    return Results.Created($"/api/stories/{story.Id}", story);
+})
+.WithName("CreateStory");
+
+adminApi.MapPut("/stories/{storyId:guid}", async (
+    Guid storyId,
+    SaveStoryRequest request,
+    ITravelMateRepository repository,
+    IServiceProvider serviceProvider,
+    CancellationToken cancellationToken) =>
+{
+    var story = await repository.SaveStoryAsync(request with { Id = storyId }, cancellationToken);
+    await SeedSearchAsync(serviceProvider, cancellationToken);
+    return Results.Ok(story);
+})
+.WithName("UpdateStory");
 
 app.MapPost("/api/conversation/message", async (
     ConversationRequest request,
@@ -383,7 +480,7 @@ app.MapPost("/api/contributions", async (
 })
 .WithName("SubmitContribution");
 
-app.MapGet("/api/admin/moderation-queue", async (
+adminApi.MapGet("/moderation-queue", async (
     ContributionService contributionService,
     CancellationToken cancellationToken) =>
 {
@@ -392,7 +489,7 @@ app.MapGet("/api/admin/moderation-queue", async (
 })
 .WithName("ModerationQueue");
 
-app.MapGet("/api/admin/contributions/{contributionId:guid}/moderation-results", async (
+adminApi.MapGet("/contributions/{contributionId:guid}/moderation-results", async (
     Guid contributionId,
     ContributionService contributionService,
     CancellationToken cancellationToken) =>
@@ -402,17 +499,23 @@ app.MapGet("/api/admin/contributions/{contributionId:guid}/moderation-results", 
 })
 .WithName("ModerationResults");
 
-app.MapPost("/api/admin/contributions/{contributionId:guid}/approve", async (
+adminApi.MapPost("/contributions/{contributionId:guid}/approve", async (
     Guid contributionId,
     ContributionService contributionService,
+    IServiceProvider serviceProvider,
     CancellationToken cancellationToken) =>
 {
-    var updated = await contributionService.UpdateStatusAsync(contributionId, ContributionStatus.Approved, cancellationToken);
+    var updated = await contributionService.ApproveAndPublishAsync(contributionId, cancellationToken);
+    if (updated is not null)
+    {
+        await SeedSearchAsync(serviceProvider, cancellationToken);
+    }
+
     return updated is null ? Results.NotFound() : Results.Ok(updated);
 })
 .WithName("ApproveContribution");
 
-app.MapPost("/api/admin/contributions/{contributionId:guid}/reject", async (
+adminApi.MapPost("/contributions/{contributionId:guid}/reject", async (
     Guid contributionId,
     ContributionService contributionService,
     CancellationToken cancellationToken) =>
@@ -448,3 +551,7 @@ static async Task SeedSearchAsync(IServiceProvider serviceProvider, Cancellation
 }
 
 public sealed record PlaybackEventRequest(string UserId, PlaybackAction Action);
+
+public sealed record HealthCheckStatus(string Name, string Status, string? Detail = null);
+
+public partial class Program;

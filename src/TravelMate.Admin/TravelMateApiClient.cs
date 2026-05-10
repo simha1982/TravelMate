@@ -18,6 +18,40 @@ public sealed class TravelMateApiClient(HttpClient httpClient, IConfiguration co
             cancellationToken) ?? [];
     }
 
+    public async Task<PlaceDto?> CreatePlaceAsync(SavePlaceRequestDto request, CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PostAsJsonAsync("/api/admin/places", request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<PlaceDto>(cancellationToken);
+    }
+
+    public async Task<PlaceDto?> UpdatePlaceAsync(
+        Guid placeId,
+        SavePlaceRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PutAsJsonAsync($"/api/admin/places/{placeId}", request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<PlaceDto>(cancellationToken);
+    }
+
+    public async Task<StoryDto?> CreateStoryAsync(SaveStoryRequestDto request, CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PostAsJsonAsync("/api/admin/stories", request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<StoryDto>(cancellationToken);
+    }
+
+    public async Task<StoryDto?> UpdateStoryAsync(
+        Guid storyId,
+        SaveStoryRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PutAsJsonAsync($"/api/admin/stories/{storyId}", request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<StoryDto>(cancellationToken);
+    }
+
     public async Task<IReadOnlyCollection<AiAuditEventDto>> GetAiAuditEventsAsync(
         int limit,
         CancellationToken cancellationToken)
@@ -43,12 +77,11 @@ public sealed class TravelMateApiClient(HttpClient httpClient, IConfiguration co
             cancellationToken) ?? [];
     }
 
-    public async Task<ContributionDto?> ApproveAsync(Guid contributionId, CancellationToken cancellationToken)
+    public async Task ApproveAsync(Guid contributionId, CancellationToken cancellationToken)
     {
         using var request = CreatePost($"/api/admin/contributions/{contributionId}/approve");
         using var response = await httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<ContributionDto>(cancellationToken);
     }
 
     public async Task<ContributionDto?> RejectAsync(Guid contributionId, CancellationToken cancellationToken)
@@ -95,6 +128,27 @@ public sealed record PlaceDto(
 
 public sealed record StoryDto(
     Guid Id,
+    Guid PlaceId,
+    string Title,
+    string ShortDescription,
+    string LanguageCode,
+    string[] Categories,
+    string SourceName,
+    string SourceUrl,
+    string? AudioUrl,
+    int QualityScore);
+
+public sealed record SavePlaceRequestDto(
+    Guid? Id,
+    string Name,
+    string Country,
+    string Region,
+    double Latitude,
+    double Longitude,
+    string[] Categories);
+
+public sealed record SaveStoryRequestDto(
+    Guid? Id,
     Guid PlaceId,
     string Title,
     string ShortDescription,

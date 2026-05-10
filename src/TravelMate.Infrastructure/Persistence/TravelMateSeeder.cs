@@ -15,6 +15,16 @@ public sealed class TravelMateSeeder(TravelMateDbContext dbContext)
     private static readonly Guid ChowmahallaPalaceId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311107");
     private static readonly Guid SalarJungMuseumId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311108");
     private static readonly Guid BirlaMandirId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311109");
+    private static readonly Guid QutbShahiTombsId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311110");
+    private static readonly Guid MakkahMasjidId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311111");
+    private static readonly Guid FalaknumaPalaceId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311112");
+    private static readonly Guid PuraniHaveliId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311113");
+    private static readonly Guid NehruZooId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311114");
+    private static readonly Guid PaigahTombsId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311115");
+    private static readonly Guid RamojiFilmCityId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311116");
+    private static readonly Guid ShilparamamId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311117");
+    private static readonly Guid DurgamCheruvuId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311118");
+    private static readonly Guid PaigahPalaceId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311119");
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
@@ -118,6 +128,106 @@ public sealed class TravelMateSeeder(TravelMateDbContext dbContext)
                 Latitude = 17.4062,
                 Longitude = 78.4691,
                 CategoriesJson = JsonSerializer.Serialize(new[] { "religion", "architecture", "viewpoint" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = QutbShahiTombsId,
+                Name = "Qutb Shahi Tombs",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.3950,
+                Longitude = 78.3968,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "history", "architecture", "heritage" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = MakkahMasjidId,
+                Name = "Makkah Masjid",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.3600,
+                Longitude = 78.4730,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "religion", "history", "architecture" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = FalaknumaPalaceId,
+                Name = "Falaknuma Palace",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.3315,
+                Longitude = 78.4674,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "palace", "history", "architecture" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = PuraniHaveliId,
+                Name = "Purani Haveli",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.3663,
+                Longitude = 78.4820,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "palace", "museum", "history" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = NehruZooId,
+                Name = "Nehru Zoological Park",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.3506,
+                Longitude = 78.4511,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "nature", "wildlife", "family" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = PaigahTombsId,
+                Name = "Paigah Tombs",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.3444,
+                Longitude = 78.5084,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "history", "architecture", "heritage" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = RamojiFilmCityId,
+                Name = "Ramoji Film City",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.2543,
+                Longitude = 78.6808,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "film", "entertainment", "culture" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = ShilparamamId,
+                Name = "Shilparamam",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.4526,
+                Longitude = 78.3772,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "craft", "culture", "market" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = DurgamCheruvuId,
+                Name = "Durgam Cheruvu",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.4344,
+                Longitude = 78.3897,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "nature", "lake", "cityscape" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = PaigahPalaceId,
+                Name = "Paigah Palace",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.4432,
+                Longitude = 78.4622,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "palace", "history", "architecture" }, JsonOptions)
             });
 
         dbContext.Stories.AddRange(
@@ -228,6 +338,126 @@ public sealed class TravelMateSeeder(TravelMateDbContext dbContext)
                 SourceName = "Wikipedia",
                 SourceUrl = "https://en.wikipedia.org/wiki/Birla_Mandir,_Hyderabad",
                 QualityScore = 82
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd210"),
+                PlaceId = QutbShahiTombsId,
+                Title = "The Royal Tomb Garden Near Golconda",
+                ShortDescription = "The Qutb Shahi Tombs form a historic garden of domed tombs and mosques for rulers of the Qutb Shahi dynasty, close to Golconda Fort.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "history", "architecture", "heritage" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Qutb_Shahi_tombs",
+                QualityScore = 88
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd211"),
+                PlaceId = MakkahMasjidId,
+                Title = "The Granite Mosque Beside Charminar",
+                ShortDescription = "Makkah Masjid is one of Hyderabad's largest and oldest mosques, begun under Muhammad Qutb Shah and completed during Aurangzeb's reign.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "religion", "history", "architecture" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Makkah_Masjid,_Hyderabad",
+                QualityScore = 87
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd212"),
+                PlaceId = FalaknumaPalaceId,
+                Title = "The Palace Called Mirror of the Sky",
+                ShortDescription = "Falaknuma Palace was built on a hillock by a Paigah nobleman and later owned by the Nizam of Hyderabad, known for its marble, halls, and skyward name.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "palace", "history", "architecture" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Falaknuma_Palace",
+                QualityScore = 86
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd213"),
+                PlaceId = PuraniHaveliId,
+                Title = "The Old Palace of Hyderabad",
+                ShortDescription = "Purani Haveli, also called Masarrat Mahal palace, is an Old City palace linked with Hyderabad's Nizam-era heritage and museum landscape.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "palace", "museum", "history" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Purani_Haveli",
+                QualityScore = 82
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd214"),
+                PlaceId = NehruZooId,
+                Title = "A City Zoo by Mir Alam Tank",
+                ShortDescription = "Nehru Zoological Park, also called Zoo Park, is a major Hyderabad zoo near Mir Alam Tank with wildlife, family visits, and nature education.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "nature", "wildlife", "family" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Nehru_Zoological_Park",
+                QualityScore = 80
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd215"),
+                PlaceId = PaigahTombsId,
+                Title = "The Marble Tombs of Paigah Nobles",
+                ShortDescription = "Paigah Tombs preserve the funerary architecture of Hyderabad's Paigah nobility, a family closely tied to palaces, power, and Nizam-era court life.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "history", "architecture", "heritage" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Paigah_Tombs",
+                QualityScore = 84
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd216"),
+                PlaceId = RamojiFilmCityId,
+                Title = "A Film Studio City Outside Hyderabad",
+                ShortDescription = "Ramoji Film City is an integrated film studio facility outside Hyderabad, associated with large film sets, tourism, and the Ramoji media group.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "film", "entertainment", "culture" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Ramoji_Film_City",
+                QualityScore = 81
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd217"),
+                PlaceId = ShilparamamId,
+                Title = "The Crafts Village of Madhapur",
+                ShortDescription = "Shilparamam is an arts and crafts village in Madhapur, Hyderabad, created as a place to showcase traditional crafts, culture, and artisan markets.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "craft", "culture", "market" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Shilparamam",
+                QualityScore = 80
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd218"),
+                PlaceId = DurgamCheruvuId,
+                Title = "The Hidden Lake Near HITEC City",
+                ShortDescription = "Durgam Cheruvu, also known as Raidurgam Cheruvu, is a freshwater lake near Hyderabad's HITEC City and Jubilee Hills area.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "nature", "lake", "cityscape" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Durgam_Cheruvu",
+                QualityScore = 79
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd219"),
+                PlaceId = PaigahPalaceId,
+                Title = "The Paigah Palace of Begumpet",
+                ShortDescription = "Paigah Palace was built by Sir Vicar-ul-Umra, a Paigah nobleman, and later served civic and diplomatic functions in Hyderabad.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "palace", "history", "architecture" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Paigah_Palace",
+                QualityScore = 78
             });
 
         await dbContext.SaveChangesAsync(cancellationToken);

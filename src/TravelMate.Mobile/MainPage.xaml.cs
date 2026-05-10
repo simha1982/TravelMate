@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui.Views;
 using TravelMate.Mobile.Models;
 using TravelMate.Mobile.Services;
 
@@ -65,6 +66,11 @@ public partial class MainPage : ContentPage
 
     private async void OnPlayClicked(object? sender, EventArgs e)
     {
+        await PlaySelectedStoryAsync();
+    }
+
+    private async Task PlaySelectedStoryAsync()
+    {
         if (selectedStory is null)
         {
             StatusLabel.Text = "Find a story before playing audio.";
@@ -88,8 +94,11 @@ public partial class MainPage : ContentPage
             }
 
             await apiClient.SavePlaybackEventAsync(selectedStory.StoryId, "Played", CancellationToken.None);
-            await Launcher.Default.OpenAsync(new Uri(audioUrl, UriKind.RelativeOrAbsolute));
-            StatusLabel.Text = "Opened story audio.";
+            StoryPlayer.Source = MediaSource.FromUri(audioUrl);
+            StoryPlayer.MetadataTitle = selectedStory.Title;
+            StoryPlayer.MetadataArtist = selectedStory.PlaceName;
+            StoryPlayer.Play();
+            StatusLabel.Text = "Playing story audio in TravelMate.";
         }
         catch (Exception ex)
         {
@@ -100,6 +109,29 @@ public partial class MainPage : ContentPage
     private async void OnSkipClicked(object? sender, EventArgs e)
     {
         await SaveFeedbackAsync("Skipped");
+    }
+
+    private async void OnVoiceCommandClicked(object? sender, EventArgs e)
+    {
+        var command = VoiceCommandEntry.Text?.Trim().ToLowerInvariant();
+        switch (command)
+        {
+            case "yes":
+            case "interested":
+            case "save":
+                await SaveFeedbackAsync("Interested");
+                break;
+            case "no":
+            case "skip":
+                await SaveFeedbackAsync("Skipped");
+                break;
+            case "play":
+                await PlaySelectedStoryAsync();
+                break;
+            default:
+                StatusLabel.Text = "Try yes, no, play, or skip.";
+                break;
+        }
     }
 
     private async Task SaveFeedbackAsync(string action)

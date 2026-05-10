@@ -329,6 +329,92 @@ body {
   padding: 0.25rem 0.45rem;
 }
 
+.content-management {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.content-management details,
+.edit-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.content-management summary,
+.edit-panel summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.admin-form {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-form label {
+  color: var(--muted);
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 800;
+  gap: 0.3rem;
+  text-transform: uppercase;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  min-height: 38px;
+  padding: 0.45rem 0.55rem;
+  text-transform: none;
+}
+
+.admin-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.admin-form button {
+  border: 0;
+  border-radius: 6px;
+  color: white;
+  font-weight: 750;
+  min-height: 38px;
+  padding: 0.55rem 0.8rem;
+}
+
+.wide-field {
+  display: grid;
+}
+
+.edit-panel {
+  grid-column: 1 / -1;
+}
+
+.compact-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.place-edit-list {
+  display: grid;
+  gap: 1rem;
+}
+
 .metric-grid {
   display: grid;
   gap: 1rem;
@@ -426,6 +512,9 @@ body {
 @media (max-width: 900px) {
   .moderation-row,
   .story-card,
+  .content-management,
+  .form-grid,
+  .compact-form,
   .story-facts,
   .metric-grid {
     grid-template-columns: 1fr;

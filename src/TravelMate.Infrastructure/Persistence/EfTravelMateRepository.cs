@@ -21,6 +21,60 @@ public sealed class EfTravelMateRepository(TravelMateDbContext dbContext) : ITra
         return stories.Select(ToDomain).ToArray();
     }
 
+    public async Task<Place> SavePlaceAsync(SavePlaceRequest request, CancellationToken cancellationToken)
+    {
+        var id = request.Id.GetValueOrDefault(Guid.NewGuid());
+        var entity = await dbContext.Places.FirstOrDefaultAsync(place => place.Id == id, cancellationToken);
+        if (entity is null)
+        {
+            entity = new PlaceEntity { Id = id };
+            dbContext.Places.Add(entity);
+        }
+
+        entity.Name = request.Name.Trim();
+        entity.Country = request.Country.Trim();
+        entity.Region = request.Region.Trim();
+        entity.Latitude = request.Latitude;
+        entity.Longitude = request.Longitude;
+        entity.CategoriesJson = JsonSerializer.Serialize(NormalizeCategories(request.Categories), JsonOptions);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ToDomain(entity);
+    }
+
+    public async Task<Story> SaveStoryAsync(SaveStoryRequest request, CancellationToken cancellationToken)
+    {
+        var id = request.Id.GetValueOrDefault(Guid.NewGuid());
+        var entity = await dbContext.Stories.FirstOrDefaultAsync(story => story.Id == id, cancellationToken);
+        if (entity is null)
+        {
+            entity = new StoryEntity { Id = id };
+            dbContext.Stories.Add(entity);
+        }
+
+        entity.PlaceId = request.PlaceId;
+        entity.Title = request.Title.Trim();
+        entity.ShortDescription = request.ShortDescription.Trim();
+        entity.LanguageCode = string.IsNullOrWhiteSpace(request.LanguageCode) ? "en" : request.LanguageCode.Trim();
+        entity.CategoriesJson = JsonSerializer.Serialize(NormalizeCategories(request.Categories), JsonOptions);
+        entity.SourceName = request.SourceName.Trim();
+        entity.SourceUrl = request.SourceUrl.Trim();
+        entity.AudioUrl = string.IsNullOrWhiteSpace(request.AudioUrl) ? null : request.AudioUrl.Trim();
+        entity.QualityScore = request.QualityScore;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ToDomain(entity);
+    }
+
+    public async Task<Place?> FindPlaceByNameAsync(string placeName, CancellationToken cancellationToken)
+    {
+        var normalized = placeName.Trim();
+        var entity = await dbContext.Places.AsNoTracking()
+            .FirstOrDefaultAsync(place => place.Name == normalized, cancellationToken);
+
+        return entity is null ? null : ToDomain(entity);
+    }
+
     public async Task<UserPreference> GetPreferenceAsync(string userId, CancellationToken cancellationToken)
     {
         var preference = await dbContext.UserPreferences.AsNoTracking()
@@ -117,4 +171,11 @@ public sealed class EfTravelMateRepository(TravelMateDbContext dbContext) : ITra
 
     private static T Deserialize<T>(string json) =>
         JsonSerializer.Deserialize<T>(json, JsonOptions) ?? throw new InvalidOperationException("Stored JSON was invalid.");
+
+    private static string[] NormalizeCategories(IEnumerable<string> categories) =>
+        categories
+            .Where(category => !string.IsNullOrWhiteSpace(category))
+            .Select(category => category.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 }

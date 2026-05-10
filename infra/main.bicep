@@ -20,11 +20,15 @@ param sqlAdministratorLogin string
 @secure()
 param sqlAdministratorPassword string
 
+@description('When true, app settings use Key Vault references for secrets that will be supplied after deployment.')
+param useKeyVaultReferences bool = false
+
 var namePrefix = 'travelmate-${environmentName}'
 var storageName = 'tm${environmentName}${uniqueSuffix}'
 var sqlServerName = '${namePrefix}-sql-${uniqueSuffix}'
 var appServicePlanName = '${namePrefix}-plan'
 var apiAppName = '${namePrefix}-api-${uniqueSuffix}'
+var adminAppName = '${namePrefix}-admin-${uniqueSuffix}'
 var searchName = '${namePrefix}-search-${uniqueSuffix}'
 var apiManagementName = '${namePrefix}-apim-${uniqueSuffix}'
 var keyVaultName = '${namePrefix}-kv-${uniqueSuffix}'
@@ -32,6 +36,12 @@ var appInsightsName = '${namePrefix}-appi'
 var logAnalyticsName = '${namePrefix}-log'
 var speechName = '${namePrefix}-speech-${uniqueSuffix}'
 var openAiName = '${namePrefix}-openai-${uniqueSuffix}'
+var sqlConnectionString = 'Server=tcp:${sqlServer.properties.fullyQualifiedDomainName},1433;Initial Catalog=TravelMate;Persist Security Info=False;User ID=${sqlAdministratorLogin};Password=${sqlAdministratorPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
+var sqlConnectionSettingValue = useKeyVaultReferences ? '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=TravelMateSqlConnectionString)' : sqlConnectionString
+var audioStorageConnectionSettingValue = useKeyVaultReferences ? '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=AudioStorageConnectionString)' : ''
+var azureSearchApiKeySettingValue = useKeyVaultReferences ? '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=AzureSearchApiKey)' : ''
+var azureOpenAiApiKeySettingValue = useKeyVaultReferences ? '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=AzureOpenAIApiKey)' : ''
+var azureSpeechApiKeySettingValue = useKeyVaultReferences ? '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=AzureSpeechApiKey)' : ''
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsName
@@ -150,7 +160,7 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
         }
         {
           name: 'ConnectionStrings__TravelMateSql'
-          value: 'Server=tcp:${sqlServer.properties.fullyQualifiedDomainName},1433;Initial Catalog=TravelMate;Persist Security Info=False;User ID=${sqlAdministratorLogin};Password=${sqlAdministratorPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
+          value: sqlConnectionSettingValue
         }
         {
           name: 'Database__ApplyMigrationsOnStartup'
@@ -161,6 +171,10 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
           value: 'story-audio'
         }
         {
+          name: 'AudioStorage__ConnectionString'
+          value: audioStorageConnectionSettingValue
+        }
+        {
           name: 'AzureSearch__Endpoint'
           value: 'https://${search.name}.search.windows.net'
         }
@@ -169,12 +183,55 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
           value: 'travelmate-stories'
         }
         {
+          name: 'AzureSearch__ApiKey'
+          value: azureSearchApiKeySettingValue
+        }
+        {
           name: 'AzureSpeech__Region'
           value: location
         }
         {
+          name: 'AzureSpeech__ApiKey'
+          value: azureSpeechApiKeySettingValue
+        }
+        {
           name: 'AzureOpenAI__Endpoint'
           value: openAi.properties.endpoint
+        }
+        {
+          name: 'AzureOpenAI__ApiKey'
+          value: azureOpenAiApiKeySettingValue
+        }
+        {
+          name: 'AdminAuth__RequireAuthorization'
+          value: 'false'
+        }
+      ]
+    }
+  }
+}
+
+resource adminApp 'Microsoft.Web/sites@2023-12-01' = {
+  name: adminAppName
+  location: location
+  kind: 'app,linux'
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    serverFarmId: appServicePlan.id
+    httpsOnly: true
+    siteConfig: {
+      linuxFxVersion: 'DOTNETCORE|10.0'
+      minimumTlsVersion: '1.2'
+      appSettings: [
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: appInsights.properties.ConnectionString
+        }
+        {
+          name: 'TravelMateApi__BaseUrl'
+          value: 'https://${apiApp.properties.defaultHostName}'
         }
       ]
     }
@@ -309,6 +366,26 @@ resource keyVault 'Microsoft.KeyVault/vaults@2024-04-01-preview' = {
   }
 }
 
+resource apiKeyVaultSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(keyVault.id, apiApp.id, 'KeyVaultSecretsUser')
+  scope: keyVault
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+    principalId: apiApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource adminKeyVaultSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(keyVault.id, adminApp.id, 'KeyVaultSecretsUser')
+  scope: keyVault
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+    principalId: adminApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 resource apiManagement 'Microsoft.ApiManagement/service@2023-09-01-preview' = {
   name: apiManagementName
   location: location
@@ -323,6 +400,7 @@ resource apiManagement 'Microsoft.ApiManagement/service@2023-09-01-preview' = {
 }
 
 output apiUrl string = 'https://${apiApp.properties.defaultHostName}'
+output adminUrl string = 'https://${adminApp.properties.defaultHostName}'
 output apiManagementGatewayUrl string = apiManagement.properties.gatewayUrl
 output storageAccountName string = storage.name
 output sqlServerFullyQualifiedDomainName string = sqlServer.properties.fullyQualifiedDomainName

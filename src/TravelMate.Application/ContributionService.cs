@@ -5,6 +5,7 @@ namespace TravelMate.Application;
 
 public sealed class ContributionService(
     IContributionRepository repository,
+    ITravelMateRepository travelMateRepository,
     IModelGateway modelGateway)
 {
     public async Task<Contribution> SubmitAsync(
@@ -43,6 +44,44 @@ public sealed class ContributionService(
         ContributionStatus status,
         CancellationToken cancellationToken) =>
         repository.UpdateStatusAsync(contributionId, status, cancellationToken);
+
+    public async Task<PublishedContributionResult?> ApproveAndPublishAsync(
+        Guid contributionId,
+        CancellationToken cancellationToken)
+    {
+        var contribution = await repository.GetAsync(contributionId, cancellationToken);
+        if (contribution is null)
+        {
+            return null;
+        }
+
+        var place = await travelMateRepository.FindPlaceByNameAsync(contribution.PlaceName, cancellationToken)
+            ?? await travelMateRepository.SavePlaceAsync(new SavePlaceRequest(
+                null,
+                contribution.PlaceName,
+                "Unknown",
+                contribution.PlaceName,
+                contribution.Location.Latitude,
+                contribution.Location.Longitude,
+                ["community", "local"]), cancellationToken);
+
+        var story = await travelMateRepository.SaveStoryAsync(new SaveStoryRequest(
+            null,
+            place.Id,
+            contribution.Title,
+            contribution.StoryText,
+            contribution.LanguageCode,
+            ["community", "local"],
+            "Community contribution",
+            $"contribution://{contribution.Id:N}",
+            null,
+            70), cancellationToken);
+
+        var updated = await repository.UpdateStatusAsync(contributionId, ContributionStatus.Approved, cancellationToken)
+            ?? contribution with { Status = ContributionStatus.Approved };
+
+        return new PublishedContributionResult(updated, story);
+    }
 
     public Task<IReadOnlyCollection<ModerationResult>> GetModerationResultsAsync(
         Guid contributionId,
@@ -91,3 +130,5 @@ public sealed class ContributionService(
         };
     }
 }
+
+public sealed record PublishedContributionResult(Contribution Contribution, Story Story);
