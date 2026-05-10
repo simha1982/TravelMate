@@ -56,6 +56,24 @@ public sealed class SyntheticRouteTests
         Assert.Empty(results);
     }
 
+    [Fact]
+    public async Task HyderabadRoute_ReturnsWikipediaSourcedStories()
+    {
+        await using var dbContext = CreateDbContext();
+        await new TravelMateSeeder(dbContext).SeedAsync(CancellationToken.None);
+        var service = new NearbyStoryService(new EfTravelMateRepository(dbContext));
+
+        var results = await service.GetNearbyStoriesAsync(
+            "hyderabad-route-user",
+            new GeoPoint(17.3616, 78.4747),
+            12_000,
+            CancellationToken.None);
+
+        Assert.Contains(results, story => story.PlaceName == "Charminar" && story.SourceName == "Wikipedia");
+        Assert.Contains(results, story => story.PlaceName == "Chowmahalla Palace" && story.SourceName == "Wikipedia");
+        Assert.Contains(results, story => story.PlaceName == "Salar Jung Museum" && story.SourceName == "Wikipedia");
+    }
+
     private static TravelMateDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<TravelMateDbContext>()
