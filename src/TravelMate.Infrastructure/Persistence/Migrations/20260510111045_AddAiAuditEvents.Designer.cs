@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TravelMate.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using TravelMate.Infrastructure.Persistence;
 namespace TravelMate.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TravelMateDbContext))]
-    partial class TravelMateDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260510111045_AddAiAuditEvents")]
+    partial class AddAiAuditEvents
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

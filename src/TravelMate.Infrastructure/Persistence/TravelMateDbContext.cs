@@ -12,6 +12,7 @@ public sealed class TravelMateDbContext(DbContextOptions<TravelMateDbContext> op
     public DbSet<SubscriptionEntity> Subscriptions => Set<SubscriptionEntity>();
     public DbSet<ContributionEntity> Contributions => Set<ContributionEntity>();
     public DbSet<ModerationResultEntity> ModerationResults => Set<ModerationResultEntity>();
+    public DbSet<AiAuditEventEntity> AiAuditEvents => Set<AiAuditEventEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -88,6 +89,18 @@ public sealed class TravelMateDbContext(DbContextOptions<TravelMateDbContext> op
             entity.Property(result => result.Summary).HasMaxLength(2000).IsRequired();
             entity.Property(result => result.FlagsJson).IsRequired();
             entity.HasIndex(result => result.ContributionId);
+        });
+
+        modelBuilder.Entity<AiAuditEventEntity>(entity =>
+        {
+            entity.HasKey(auditEvent => auditEvent.Id);
+            entity.Property(auditEvent => auditEvent.TaskName).HasMaxLength(150).IsRequired();
+            entity.Property(auditEvent => auditEvent.Operation).HasMaxLength(80).IsRequired();
+            entity.Property(auditEvent => auditEvent.Model).HasMaxLength(150).IsRequired();
+            entity.Property(auditEvent => auditEvent.EstimatedCostUsd).HasPrecision(18, 6);
+            entity.Property(auditEvent => auditEvent.ErrorMessage).HasMaxLength(2000);
+            entity.HasIndex(auditEvent => auditEvent.OccurredAt);
+            entity.HasIndex(auditEvent => new { auditEvent.TaskName, auditEvent.OccurredAt });
         });
     }
 }
@@ -172,4 +185,18 @@ public sealed class ModerationResultEntity
     public string Summary { get; set; } = string.Empty;
     public string FlagsJson { get; set; } = "[]";
     public DateTimeOffset ReviewedAt { get; set; }
+}
+
+public sealed class AiAuditEventEntity
+{
+    public Guid Id { get; set; }
+    public string TaskName { get; set; } = string.Empty;
+    public string Operation { get; set; } = string.Empty;
+    public string Model { get; set; } = string.Empty;
+    public int EstimatedTokens { get; set; }
+    public decimal EstimatedCostUsd { get; set; }
+    public int LatencyMilliseconds { get; set; }
+    public bool Succeeded { get; set; }
+    public string? ErrorMessage { get; set; }
+    public DateTimeOffset OccurredAt { get; set; }
 }

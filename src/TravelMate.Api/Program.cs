@@ -33,17 +33,26 @@ if (azureAdB2CEnabled)
 
 builder.Services.AddTravelMateInfrastructure(builder.Configuration);
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<IModelGateway>(serviceProvider =>
+builder.Services.AddSingleton(
+    builder.Configuration.GetSection("AiAudit").Get<AiAuditOptions>() ?? new AiAuditOptions());
+builder.Services.AddScoped<IModelGateway>(serviceProvider =>
 {
     var configuration = serviceProvider.GetRequiredService<IConfiguration>();
     var options = configuration.GetSection("AzureOpenAI").Get<AzureOpenAiOptions>() ?? new AzureOpenAiOptions();
+    IModelGateway inner;
     if (!options.IsConfigured)
     {
-        return new StubModelGateway();
+        inner = new StubModelGateway();
+    }
+    else
+    {
+        var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+        inner = new AzureOpenAiModelGateway(httpClientFactory.CreateClient("AzureOpenAI"), options);
     }
 
-    var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-    return new AzureOpenAiModelGateway(httpClientFactory.CreateClient("AzureOpenAI"), options);
+    var auditRepository = serviceProvider.GetRequiredService<IAiAuditRepository>();
+    var auditOptions = serviceProvider.GetRequiredService<AiAuditOptions>();
+    return new AuditedModelGateway(inner, auditRepository, auditOptions);
 });
 builder.Services.AddSingleton<ITextToSpeechGateway>(serviceProvider =>
 {
@@ -128,7 +137,8 @@ app.MapGet("/", () => Results.Ok(new
         "POST /api/stories/{storyId}/playback-events",
         "POST /api/conversation/message",
         "GET /api/subscriptions/{userId}/entitlements",
-        "POST /api/admin/subscriptions"
+        "POST /api/admin/subscriptions",
+        "GET /api/admin/ai-audit"
     }
 }));
 
@@ -271,6 +281,16 @@ app.MapPost("/api/admin/subscriptions", async (
     return Results.Ok(subscription);
 })
 .WithName("SaveSubscription");
+
+app.MapGet("/api/admin/ai-audit", async (
+    int? limit,
+    IAiAuditRepository repository,
+    CancellationToken cancellationToken) =>
+{
+    var events = await repository.GetRecentAsync(limit ?? 50, cancellationToken);
+    return Results.Ok(events);
+})
+.WithName("GetAiAuditEvents");
 
 app.MapPost("/api/conversation/message", async (
     ConversationRequest request,

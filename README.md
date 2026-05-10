@@ -97,6 +97,10 @@ Set these values for Azure-backed development:
     "ApiKey": "<key>",
     "DefaultVoiceName": "en-US-JennyNeural"
   },
+  "AiAudit": {
+    "ChatCostPerThousandTokensUsd": 0.01,
+    "EmbeddingCostPerThousandTokensUsd": 0.0001
+  },
   "AudioStorage": {
     "ConnectionString": "<storage-connection-string>",
     "ContainerName": "story-audio",
@@ -124,10 +128,10 @@ Use `appsettings.Local.json`, user secrets, Key Vault, or pipeline secrets for r
 ## Next Build Steps
 
 1. Add richer MAUI audio playback and voice command UX.
-2. Add AI call audit logging and cost tracking.
-3. Add synthetic route tests for the pilot geography.
-4. Add production deployment pipeline stages for API and admin portal.
-5. Add Key Vault secret references for SQL, Azure OpenAI, Speech, and Search keys.
+2. Add synthetic route tests for the pilot geography.
+3. Add production deployment pipeline stages for API and admin portal.
+4. Add Key Vault secret references for SQL, Azure OpenAI, Speech, and Search keys.
+5. Add moderator views for AI usage and cost trends.
 
 ## Infrastructure
 

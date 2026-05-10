@@ -30,6 +30,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IContributionRepository, EfContributionRepository>();
         services.AddScoped<ISubscriptionRepository, EfSubscriptionRepository>();
         services.AddScoped<IUserConsentRepository, EfUserConsentRepository>();
+        services.AddScoped<IAiAuditRepository, EfAiAuditRepository>();
         services.AddScoped<TravelMateSeeder>();
         services.AddScoped<TravelMateDatabaseInitializer>();
 
