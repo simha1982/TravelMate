@@ -74,6 +74,7 @@ Open `http://localhost:5075/` to review submitted contributions and approve or r
 ## Configuration
 
 Local development uses EF Core InMemory when `ConnectionStrings:TravelMateSql` is empty.
+When a SQL connection string is configured, use EF Core migrations for schema rollout.
 
 Set these values for Azure-backed development:
 
@@ -81,6 +82,9 @@ Set these values for Azure-backed development:
 {
   "ConnectionStrings": {
     "TravelMateSql": "<azure-sql-connection-string>"
+  },
+  "Database": {
+    "ApplyMigrationsOnStartup": false
   },
   "AzureOpenAI": {
     "Endpoint": "https://<account>.openai.azure.com",
@@ -119,11 +123,11 @@ Use `appsettings.Local.json`, user secrets, Key Vault, or pipeline secrets for r
 
 ## Next Build Steps
 
-1. Add EF Core migrations for Azure SQL rollout.
-2. Add richer MAUI audio playback and voice command UX.
-3. Add AI call audit logging and cost tracking.
-4. Add synthetic route tests for the pilot geography.
-5. Add production deployment pipeline stages for API and admin portal.
+1. Add richer MAUI audio playback and voice command UX.
+2. Add AI call audit logging and cost tracking.
+3. Add synthetic route tests for the pilot geography.
+4. Add production deployment pipeline stages for API and admin portal.
+5. Add Key Vault secret references for SQL, Azure OpenAI, Speech, and Search keys.
 
 ## Infrastructure
 
@@ -136,4 +140,15 @@ az deployment group create `
   --parameters environmentName=dev `
   --parameters sqlAdministratorLogin=travelmateadmin `
   --parameters sqlAdministratorPassword='<secure-password>'
+```
+
+Generate future schema changes with the repo-local EF tool:
+
+```powershell
+dotnet tool restore
+dotnet tool run dotnet-ef migrations add <MigrationName> `
+  --project .\src\TravelMate.Infrastructure\TravelMate.Infrastructure.csproj `
+  --startup-project .\src\TravelMate.Api\TravelMate.Api.csproj `
+  --context TravelMateDbContext `
+  --output-dir Persistence\Migrations
 ```

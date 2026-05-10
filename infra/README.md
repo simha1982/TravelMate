@@ -38,3 +38,5 @@ After deployment, store these values in Key Vault or App Service settings:
 - `AzureOpenAI__ChatDeployment`
 - `AzureOpenAI__EmbeddingDeployment`
 - `AzureSpeech__ApiKey`
+
+The dev template sets `Database__ApplyMigrationsOnStartup=true` so the API can apply EF Core migrations during startup. For production, prefer running the generated migration script in CI/CD and setting this flag to `false`.

@@ -95,6 +95,15 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
   }
 }
 
+resource sqlAllowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-08-01-preview' = {
+  parent: sqlServer
+  name: 'AllowAzureServices'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+}
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: appServicePlanName
   location: location
@@ -138,6 +147,14 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
         {
           name: 'TravelMate__SqlDatabase'
           value: 'TravelMate'
+        }
+        {
+          name: 'ConnectionStrings__TravelMateSql'
+          value: 'Server=tcp:${sqlServer.properties.fullyQualifiedDomainName},1433;Initial Catalog=TravelMate;Persist Security Info=False;User ID=${sqlAdministratorLogin};Password=${sqlAdministratorPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
+        }
+        {
+          name: 'Database__ApplyMigrationsOnStartup'
+          value: 'true'
         }
         {
           name: 'AudioStorage__ContainerName'

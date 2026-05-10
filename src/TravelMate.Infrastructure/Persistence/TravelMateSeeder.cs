@@ -12,7 +12,10 @@ public sealed class TravelMateSeeder(TravelMateDbContext dbContext)
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
-        await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+        if (!dbContext.Database.IsRelational())
+        {
+            await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+        }
 
         if (await dbContext.Places.AnyAsync(cancellationToken))
         {

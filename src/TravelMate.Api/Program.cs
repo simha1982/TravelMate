@@ -67,8 +67,8 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var seeder = scope.ServiceProvider.GetRequiredService<TravelMateSeeder>();
-    await seeder.SeedAsync(CancellationToken.None);
+    var initializer = scope.ServiceProvider.GetRequiredService<TravelMateDatabaseInitializer>();
+    await initializer.InitializeAsync(CancellationToken.None);
     await SeedSearchAsync(scope.ServiceProvider, CancellationToken.None);
 }
 
