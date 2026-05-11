@@ -43,3 +43,5 @@ After install:
 2. Enter the API base URL in `Connection`.
 3. Tap `Test connection`.
 4. Use `Start demo trip`.
+
+The APK targets Android 8.0/API 26 or newer because the in-app media playback package requires Android 26+. If the API is not reachable, the demo trip still shows a small offline Hyderabad/Nandi Hills story catalog so the app can open and demonstrate the flow.

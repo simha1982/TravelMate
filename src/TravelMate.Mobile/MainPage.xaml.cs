@@ -183,11 +183,20 @@ public partial class MainPage : ContentPage
         LocationLabel.Text = $"{locationName} - {latitude:0.0000}, {longitude:0.0000}";
         UpdateMapPreview(latitude, longitude, locationName);
 
-        var stories = await apiClient.GetNearbyStoriesAsync(
-            latitude,
-            longitude,
-            radiusMeters,
-            CancellationToken.None);
+        IReadOnlyCollection<NearbyStoryDto> stories;
+        try
+        {
+            stories = await apiClient.GetNearbyStoriesAsync(
+                latitude,
+                longitude,
+                radiusMeters,
+                CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            stories = OfflineStoryCatalog.GetNearbyStories(latitude, longitude, radiusMeters);
+            StatusLabel.Text = $"API unavailable, showing offline demo stories: {ex.Message}";
+        }
 
         currentStories = stories.ToArray();
         StoriesCollection.ItemsSource = currentStories;
@@ -205,7 +214,14 @@ public partial class MainPage : ContentPage
         }
 
         SetSelectedStory(selectedStory);
-        StatusLabel.Text = $"Found {stories.Count} nearby story option(s). Tap a card to choose one.";
+        if (StatusLabel.Text.StartsWith("API unavailable", StringComparison.OrdinalIgnoreCase))
+        {
+            StatusLabel.Text += $" Found {stories.Count} offline story option(s).";
+        }
+        else
+        {
+            StatusLabel.Text = $"Found {stories.Count} nearby story option(s). Tap a card to choose one.";
+        }
     }
 
     private void OnStorySelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -231,10 +247,18 @@ public partial class MainPage : ContentPage
         StoryTitleLabel.Text = story.Title;
         StoryDescriptionLabel.Text = story.ShortDescription;
         StoryDetailLabel.Text = $"{story.DistanceMeters:0} m away - score {story.Score:0.00} - {story.SourceName}";
-        selectedStoryDetail = await apiClient.GetStoryDetailAsync(story.StoryId, CancellationToken.None);
-        if (selectedStoryDetail?.Story is not null)
+        try
         {
-            StoryDetailLabel.Text = $"{story.DistanceMeters:0} m away - {string.Join(", ", selectedStoryDetail.Story.Categories)} - {selectedStoryDetail.Story.SourceName}";
+            selectedStoryDetail = await apiClient.GetStoryDetailAsync(story.StoryId, CancellationToken.None);
+            if (selectedStoryDetail?.Story is not null)
+            {
+                StoryDetailLabel.Text = $"{story.DistanceMeters:0} m away - {string.Join(", ", selectedStoryDetail.Story.Categories)} - {selectedStoryDetail.Story.SourceName}";
+            }
+        }
+        catch
+        {
+            selectedStoryDetail = null;
+            StoryDetailLabel.Text = $"{story.DistanceMeters:0} m away - {story.SourceName}";
         }
     }
 
