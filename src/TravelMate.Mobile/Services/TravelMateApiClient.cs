@@ -84,6 +84,29 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task SubmitContributionAsync(
+        string placeName,
+        string title,
+        string storyText,
+        double latitude,
+        double longitude,
+        string languageCode,
+        CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PostAsJsonAsync(
+            "api/contributions",
+            new SubmitContributionRequest(
+                DemoUserId,
+                placeName,
+                latitude,
+                longitude,
+                languageCode,
+                title,
+                storyText),
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task<string> SynthesizeToLocalFileAsync(
         string text,
         string languageCode,

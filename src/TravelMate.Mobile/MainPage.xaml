@@ -30,6 +30,15 @@
                         Text="Load demo stories"
                         Clicked="OnLoadDemoLocationClicked"
                         HorizontalOptions="Fill" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button
+                            Text="Start demo trip"
+                            Clicked="OnStartDemoTripClicked" />
+                        <Button
+                            Grid.Column="1"
+                            Text="Next stop"
+                            Clicked="OnNextDemoStopClicked" />
+                    </Grid>
                     <Label
                         x:Name="LocationLabel"
                         Text="No location selected yet."
@@ -115,7 +124,8 @@
                         x:Name="StoryPlayer"
                         HeightRequest="72"
                         ShouldAutoPlay="False"
-                        ShouldShowPlaybackControls="True" />
+                        ShouldShowPlaybackControls="True"
+                        MediaEnded="OnStoryPlayerMediaEnded" />
                     <HorizontalStackLayout Spacing="10">
                         <Button
                             Text="Previous"
@@ -237,6 +247,29 @@
                     <Button
                         Text="Save consent"
                         Clicked="OnSaveConsentClicked" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border StrokeThickness="1" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label
+                        Text="Contribute a story"
+                        FontAttributes="Bold"
+                        FontSize="16" />
+                    <Entry
+                        x:Name="ContributionPlaceEntry"
+                        Placeholder="Place name" />
+                    <Entry
+                        x:Name="ContributionTitleEntry"
+                        Placeholder="Story title" />
+                    <Editor
+                        x:Name="ContributionTextEditor"
+                        Placeholder="Tell the story in a few sentences"
+                        AutoSize="TextChanges"
+                        HeightRequest="120" />
+                    <Button
+                        Text="Submit contribution"
+                        Clicked="OnSubmitContributionClicked" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

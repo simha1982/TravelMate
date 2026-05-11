@@ -79,6 +79,20 @@ public sealed class TravelMateApiIntegrationTests : IClassFixture<WebApplication
         Assert.Contains(stories, story => story.Title == title);
     }
 
+    [Fact]
+    public async Task PlaybackEventEndpoint_AcceptsCompletedEvent()
+    {
+        var storyId = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd204");
+
+        using var response = await client.PostAsJsonAsync($"/api/stories/{storyId}/playback-events", new
+        {
+            userId = $"integration-user-{Guid.NewGuid():N}",
+            action = "Completed"
+        });
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+    }
+
     private sealed record HealthResponse(string Status, HealthCheckResponse[] Checks);
     private sealed record HealthCheckResponse(string Name, string Status, string? Detail);
     private sealed record PlaceResponse(Guid Id, string Name);

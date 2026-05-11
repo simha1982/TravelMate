@@ -11,15 +11,28 @@ public partial class MainPage : ContentPage
     [
         new("Hyderabad - Charminar cluster", 17.3616, 78.4747, 15_000),
         new("Hyderabad - Golconda and tombs", 17.3833, 78.4011, 8_000),
+        new("Hyderabad - Hussain Sagar lakefront", 17.4239, 78.4738, 8_000),
+        new("Hyderabad - Birla Mandir viewpoint", 17.4062, 78.4691, 8_000),
         new("Nandi Hills", 13.3702, 77.6835, 5_000),
         new("Bengaluru - Chinnaswamy Stadium", 12.9788, 77.5996, 5_000),
         new("South Africa - St Lucia Wetlands", -28.0000, 32.4800, 5_000)
+    ];
+    private readonly List<DemoLocation> hyderabadDemoTrip =
+    [
+        new("Trip stop 1 - Charminar and Old City", 17.3616, 78.4747, 6_000),
+        new("Trip stop 2 - Salar Jung and Musi River", 17.3713, 78.4804, 6_000),
+        new("Trip stop 3 - Hussain Sagar lakefront", 17.4239, 78.4738, 7_000),
+        new("Trip stop 4 - Birla Mandir viewpoint", 17.4062, 78.4691, 6_000),
+        new("Trip stop 5 - Golconda and Qutb Shahi tombs", 17.3833, 78.4011, 7_000)
     ];
 
     private IReadOnlyList<NearbyStoryDto> currentStories = [];
     private StoryDetailDto? selectedStoryDetail;
     private NearbyStoryDto? selectedStory;
     private int selectedStoryIndex = -1;
+    private int demoTripIndex = -1;
+    private double currentLatitude = 17.3616;
+    private double currentLongitude = 78.4747;
     private string? lastAnswer;
 
     public MainPage(TravelMateApiClient apiClient)
@@ -98,6 +111,32 @@ public partial class MainPage : ContentPage
             demoLocation.Name);
     }
 
+    private async void OnStartDemoTripClicked(object? sender, EventArgs e)
+    {
+        demoTripIndex = 0;
+        await LoadDemoTripStopAsync();
+    }
+
+    private async void OnNextDemoStopClicked(object? sender, EventArgs e)
+    {
+        demoTripIndex = demoTripIndex < 0
+            ? 0
+            : (demoTripIndex + 1) % hyderabadDemoTrip.Count;
+
+        await LoadDemoTripStopAsync();
+    }
+
+    private async Task LoadDemoTripStopAsync()
+    {
+        var stop = hyderabadDemoTrip[demoTripIndex];
+        await LoadStoriesAsync(
+            stop.Latitude,
+            stop.Longitude,
+            stop.RadiusMeters,
+            stop.Name);
+        StatusLabel.Text = $"Demo trip stop {demoTripIndex + 1} of {hyderabadDemoTrip.Count}: {stop.Name}.";
+    }
+
     private async Task LoadStoriesAsync(
         double latitude,
         double longitude,
@@ -105,6 +144,8 @@ public partial class MainPage : ContentPage
         string locationName)
     {
         StatusLabel.Text = $"Looking near {latitude:0.0000}, {longitude:0.0000}...";
+        currentLatitude = latitude;
+        currentLongitude = longitude;
         LocationLabel.Text = $"{locationName} - {latitude:0.0000}, {longitude:0.0000}";
         UpdateMapPreview(latitude, longitude, locationName);
 
@@ -257,6 +298,24 @@ public partial class MainPage : ContentPage
         await SaveFeedbackAsync("Skipped");
     }
 
+    private async void OnStoryPlayerMediaEnded(object? sender, EventArgs e)
+    {
+        if (selectedStory is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await apiClient.SavePlaybackEventAsync(selectedStory.StoryId, "Completed", CancellationToken.None);
+            StatusLabel.Text = "Story completed. TravelMate will reduce repeats in future recommendations.";
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Could not save completion event: {ex.Message}";
+        }
+    }
+
     private async void OnNotInterestedClicked(object? sender, EventArgs e)
     {
         await SaveFeedbackAsync("NotInterested");
@@ -393,6 +452,42 @@ public partial class MainPage : ContentPage
         catch (Exception ex)
         {
             StatusLabel.Text = $"Could not save consent: {ex.Message}";
+        }
+    }
+
+    private async void OnSubmitContributionClicked(object? sender, EventArgs e)
+    {
+        var placeName = ContributionPlaceEntry.Text?.Trim();
+        var title = ContributionTitleEntry.Text?.Trim();
+        var storyText = ContributionTextEditor.Text?.Trim();
+
+        if (string.IsNullOrWhiteSpace(placeName)
+            || string.IsNullOrWhiteSpace(title)
+            || string.IsNullOrWhiteSpace(storyText))
+        {
+            StatusLabel.Text = "Enter place, title, and story text before submitting.";
+            return;
+        }
+
+        try
+        {
+            var language = LanguagePicker.SelectedItem as string ?? "en";
+            await apiClient.SubmitContributionAsync(
+                placeName,
+                title,
+                storyText,
+                currentLatitude,
+                currentLongitude,
+                language,
+                CancellationToken.None);
+
+            ContributionTitleEntry.Text = "";
+            ContributionTextEditor.Text = "";
+            StatusLabel.Text = "Submitted contribution for admin moderation.";
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Could not submit contribution: {ex.Message}";
         }
     }
 

@@ -9,15 +9,18 @@ The MVP backend is a C#/.NET API that can:
 - Save user preferences.
 - Store explicit location, voice, and personalization consent.
 - Capture playback feedback such as played, skipped, and interested.
+- Reduce repeated recommendations using playback history and negative feedback.
 - Answer a simple "tell me about this place" conversation request.
 - Store data through EF Core using SQL Server in Azure or an in-memory database locally.
 - Call Azure OpenAI and Azure Speech through gateway abstractions, with local stubs when cloud settings are absent.
 - Save generated story audio to local disk or Azure Blob Storage.
 - Index and search curated stories through local in-memory search or Azure AI Search.
 - Accept user story contributions and create moderation review records.
+- Publish approved contributions into searchable story records.
 - Enforce free vs premium story playback entitlements.
 - Provide a C# Razor Pages admin portal for human moderation decisions.
 - Run a .NET MAUI Android-first mobile app for location, nearby story prompts, and feedback.
+- Demo a Hyderabad route, play stories in-app, and submit pilot contributions from mobile.
 
 ## Solution Structure
 
@@ -61,6 +64,12 @@ Run tests:
 
 ```powershell
 dotnet test .\TravelMate.sln
+```
+
+Run the mobile smoke build and checklist:
+
+```powershell
+.\scripts\test-mobile.ps1
 ```
 
 Run the admin moderation portal after starting the API:
@@ -127,11 +136,11 @@ Use `appsettings.Local.json`, user secrets, Key Vault, or pipeline secrets for r
 
 ## Next Build Steps
 
-1. Add richer MAUI audio playback and voice command UX.
-2. Add production deployment pipeline stages for API and admin portal.
-3. Add Key Vault secret references for SQL, Azure OpenAI, Speech, and Search keys.
-4. Add moderator views for AI usage and cost trends.
-5. Expand pilot route seed data from 3 places to 20-50 curated places.
+1. Supply Azure SQL, Azure OpenAI, Azure Speech, Azure AI Search, B2C, and GitHub deployment secret values.
+2. Run a real Azure deployment from the Bicep and GitHub Actions scaffolding.
+3. Replace typed voice-command prototype with Azure Speech-to-text once credentials are available.
+4. Add offline/regional story pack downloads.
+5. Add partner APIs, subscription checkout, and production monitoring dashboards.
 
 ## Infrastructure
 

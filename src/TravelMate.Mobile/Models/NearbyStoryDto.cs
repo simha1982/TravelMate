@@ -45,6 +45,15 @@ public sealed record SaveUserConsentRequest(
     bool VoiceConsent,
     bool PersonalizationConsent);
 
+public sealed record SubmitContributionRequest(
+    string ContributorUserId,
+    string PlaceName,
+    double Latitude,
+    double Longitude,
+    string LanguageCode,
+    string Title,
+    string StoryText);
+
 public sealed record StoryDetailDto(StoryDto Story, PlaceDto? Place);
 
 public sealed record StoryDto(

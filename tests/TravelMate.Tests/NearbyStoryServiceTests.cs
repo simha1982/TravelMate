@@ -71,6 +71,52 @@ public sealed class NearbyStoryServiceTests
     }
 
     [Fact]
+    public async Task NearbyStories_DeprioritizesButDoesNotHideSkippedStories()
+    {
+        await using var dbContext = CreateDbContext();
+        await new TravelMateSeeder(dbContext).SeedAsync(CancellationToken.None);
+        var repository = new EfTravelMateRepository(dbContext);
+        var charminarStoryId = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd204");
+
+        await repository.SavePlaybackEventAsync(
+            new PlaybackEvent("demo-user", charminarStoryId, PlaybackAction.Skipped, DateTimeOffset.UtcNow),
+            CancellationToken.None);
+
+        var service = new NearbyStoryService(repository);
+        var results = await service.GetNearbyStoriesAsync(
+            "demo-user",
+            new GeoPoint(17.3616, 78.4747),
+            15_000,
+            CancellationToken.None);
+
+        Assert.NotEmpty(results);
+        Assert.NotEqual(charminarStoryId, results.First().StoryId);
+    }
+
+    [Fact]
+    public async Task NearbyStories_UsesInterestedFeedbackAsCategorySignal()
+    {
+        await using var dbContext = CreateDbContext();
+        await new TravelMateSeeder(dbContext).SeedAsync(CancellationToken.None);
+        var repository = new EfTravelMateRepository(dbContext);
+        var charminarStoryId = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd204");
+
+        await repository.SavePlaybackEventAsync(
+            new PlaybackEvent("demo-user", charminarStoryId, PlaybackAction.Interested, DateTimeOffset.UtcNow),
+            CancellationToken.None);
+
+        var service = new NearbyStoryService(repository);
+        var results = await service.GetNearbyStoriesAsync(
+            "demo-user",
+            new GeoPoint(17.3616, 78.4747),
+            15_000,
+            CancellationToken.None);
+
+        var charminarStory = Assert.Single(results, result => result.StoryId == charminarStoryId);
+        Assert.True(charminarStory.Score > 0.88);
+    }
+
+    [Fact]
     public async Task Seeder_CreatesAtLeastTwentyPilotPlaces()
     {
         await using var dbContext = CreateDbContext();
