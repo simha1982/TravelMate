@@ -52,6 +52,13 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         return await response.Content.ReadFromJsonAsync<RagAnswerResponse>(cancellationToken);
     }
 
+    public async Task<StoryDetailDto?> GetStoryDetailAsync(Guid storyId, CancellationToken cancellationToken)
+    {
+        return await httpClient.GetFromJsonAsync<StoryDetailDto>(
+            $"api/stories/{storyId}",
+            cancellationToken);
+    }
+
     public async Task SavePreferencesAsync(
         IReadOnlyDictionary<string, double> interests,
         string preferredLanguageCode,
@@ -97,6 +104,11 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         await File.WriteAllBytesAsync(path, bytes, cancellationToken);
         return path;
     }
+
+    public Task<string> SynthesizeStoryToLocalFileAsync(
+        NearbyStoryDto story,
+        CancellationToken cancellationToken) =>
+        SynthesizeToLocalFileAsync(story.ShortDescription, story.LanguageCode, cancellationToken);
 
     private static string NormalizeLanguage(string languageCode) =>
         languageCode.Equals("en", StringComparison.OrdinalIgnoreCase) ? "en-US" : languageCode;

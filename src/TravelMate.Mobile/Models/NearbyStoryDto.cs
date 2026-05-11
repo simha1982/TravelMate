@@ -44,3 +44,27 @@ public sealed record SaveUserConsentRequest(
     bool LocationConsent,
     bool VoiceConsent,
     bool PersonalizationConsent);
+
+public sealed record StoryDetailDto(StoryDto Story, PlaceDto? Place);
+
+public sealed record StoryDto(
+    Guid Id,
+    Guid PlaceId,
+    string Title,
+    string ShortDescription,
+    string LanguageCode,
+    string[] Categories,
+    string SourceName,
+    string SourceUrl,
+    string? AudioUrl,
+    int QualityScore);
+
+public sealed record PlaceDto(
+    Guid Id,
+    string Name,
+    string Country,
+    string Region,
+    GeoPointDto Location,
+    string[] Categories);
+
+public sealed record GeoPointDto(double Latitude, double Longitude);

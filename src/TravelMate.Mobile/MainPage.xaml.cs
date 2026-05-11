@@ -16,7 +16,10 @@ public partial class MainPage : ContentPage
         new("South Africa - St Lucia Wetlands", -28.0000, 32.4800, 5_000)
     ];
 
+    private IReadOnlyList<NearbyStoryDto> currentStories = [];
+    private StoryDetailDto? selectedStoryDetail;
     private NearbyStoryDto? selectedStory;
+    private int selectedStoryIndex = -1;
     private string? lastAnswer;
 
     public MainPage(TravelMateApiClient apiClient)
@@ -111,8 +114,10 @@ public partial class MainPage : ContentPage
             radiusMeters,
             CancellationToken.None);
 
-        StoriesCollection.ItemsSource = stories;
-        selectedStory = stories.FirstOrDefault();
+        currentStories = stories.ToArray();
+        StoriesCollection.ItemsSource = currentStories;
+        selectedStory = currentStories.FirstOrDefault();
+        selectedStoryIndex = selectedStory is null ? -1 : 0;
         StoriesCollection.SelectedItem = selectedStory;
 
         if (selectedStory is null)
@@ -131,22 +136,58 @@ public partial class MainPage : ContentPage
     private void OnStorySelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         selectedStory = e.CurrentSelection.FirstOrDefault() as NearbyStoryDto;
+        selectedStoryIndex = selectedStory is null ? -1 : currentStories.IndexOf(selectedStory);
         SetSelectedStory(selectedStory);
     }
 
-    private void SetSelectedStory(NearbyStoryDto? story)
+    private async void SetSelectedStory(NearbyStoryDto? story)
     {
         if (story is null)
         {
             PlaceLabel.Text = "No story selected";
             StoryTitleLabel.Text = "";
             StoryDescriptionLabel.Text = "Load a demo location or find stories near you.";
+            StoryDetailLabel.Text = "";
+            selectedStoryDetail = null;
             return;
         }
 
         PlaceLabel.Text = story.PlaceName;
         StoryTitleLabel.Text = story.Title;
         StoryDescriptionLabel.Text = story.ShortDescription;
+        StoryDetailLabel.Text = $"{story.DistanceMeters:0} m away - score {story.Score:0.00} - {story.SourceName}";
+        selectedStoryDetail = await apiClient.GetStoryDetailAsync(story.StoryId, CancellationToken.None);
+        if (selectedStoryDetail?.Story is not null)
+        {
+            StoryDetailLabel.Text = $"{story.DistanceMeters:0} m away - {string.Join(", ", selectedStoryDetail.Story.Categories)} - {selectedStoryDetail.Story.SourceName}";
+        }
+    }
+
+    private void OnPreviousStoryClicked(object? sender, EventArgs e)
+    {
+        SelectStoryByOffset(-1);
+    }
+
+    private void OnNextStoryClicked(object? sender, EventArgs e)
+    {
+        SelectStoryByOffset(1);
+    }
+
+    private void SelectStoryByOffset(int offset)
+    {
+        if (currentStories.Count == 0)
+        {
+            StatusLabel.Text = "Load stories before navigating the list.";
+            return;
+        }
+
+        selectedStoryIndex = selectedStoryIndex < 0
+            ? 0
+            : (selectedStoryIndex + offset + currentStories.Count) % currentStories.Count;
+        selectedStory = currentStories[selectedStoryIndex];
+        StoriesCollection.SelectedItem = selectedStory;
+        SetSelectedStory(selectedStory);
+        StatusLabel.Text = $"Selected {selectedStoryIndex + 1} of {currentStories.Count}.";
     }
 
     private async void OnInterestedClicked(object? sender, EventArgs e)
@@ -184,7 +225,7 @@ public partial class MainPage : ContentPage
             }
 
             await apiClient.SavePlaybackEventAsync(selectedStory.StoryId, "Played", CancellationToken.None);
-            StoryPlayer.Source = MediaSource.FromUri(audioUrl);
+            StoryPlayer.Source = await CreatePlayableSourceAsync(audioUrl, selectedStory, CancellationToken.None);
             StoryPlayer.MetadataTitle = selectedStory.Title;
             StoryPlayer.MetadataArtist = selectedStory.PlaceName;
             StoryPlayer.Play();
@@ -194,6 +235,21 @@ public partial class MainPage : ContentPage
         {
             StatusLabel.Text = $"Could not play story audio: {ex.Message}";
         }
+    }
+
+    private async Task<MediaSource> CreatePlayableSourceAsync(
+        string audioUrl,
+        NearbyStoryDto story,
+        CancellationToken cancellationToken)
+    {
+        if (Uri.TryCreate(audioUrl, UriKind.Absolute, out var uri)
+            && uri.Scheme is "http" or "https")
+        {
+            return MediaSource.FromUri(uri);
+        }
+
+        var localAudio = await apiClient.SynthesizeStoryToLocalFileAsync(story, cancellationToken);
+        return MediaSource.FromFile(localAudio);
     }
 
     private async void OnSkipClicked(object? sender, EventArgs e)
@@ -227,8 +283,15 @@ public partial class MainPage : ContentPage
             case "play":
                 await PlaySelectedStoryAsync();
                 break;
+            case "next":
+                SelectStoryByOffset(1);
+                break;
+            case "previous":
+            case "back":
+                SelectStoryByOffset(-1);
+                break;
             default:
-                StatusLabel.Text = "Try yes, no, play, or skip.";
+                StatusLabel.Text = "Try yes, no, play, skip, next, or previous.";
                 break;
         }
     }
@@ -333,6 +396,33 @@ public partial class MainPage : ContentPage
         }
     }
 
+    private async void OnOpenSourceClicked(object? sender, EventArgs e)
+    {
+        var sourceUrl = selectedStoryDetail?.Story.SourceUrl;
+        if (string.IsNullOrWhiteSpace(sourceUrl))
+        {
+            StatusLabel.Text = "Source link is not available for this story.";
+            return;
+        }
+
+        await Launcher.Default.OpenAsync(sourceUrl);
+    }
+
+    private async void OnOpenMapClicked(object? sender, EventArgs e)
+    {
+        if (selectedStoryDetail?.Place is null)
+        {
+            StatusLabel.Text = "Place map details are not loaded yet.";
+            return;
+        }
+
+        var place = selectedStoryDetail.Place;
+        await Map.Default.OpenAsync(
+            place.Location.Latitude,
+            place.Location.Longitude,
+            new MapLaunchOptions { Name = place.Name });
+    }
+
     private void UpdateMapPreview(double latitude, double longitude, string label)
     {
         var encodedLabel = System.Net.WebUtility.HtmlEncode(label);
@@ -357,6 +447,22 @@ public partial class MainPage : ContentPage
                 </html>
                 """
         };
+    }
+}
+
+public static class StoryListExtensions
+{
+    public static int IndexOf(this IReadOnlyList<NearbyStoryDto> stories, NearbyStoryDto story)
+    {
+        for (var index = 0; index < stories.Count; index++)
+        {
+            if (stories[index].StoryId == story.StoryId)
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 }
 

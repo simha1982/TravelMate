@@ -107,11 +107,23 @@
                         x:Name="StoryDescriptionLabel"
                         Text=""
                         FontSize="14" />
+                    <Label
+                        x:Name="StoryDetailLabel"
+                        Text=""
+                        FontSize="13" />
                     <toolkit:MediaElement
                         x:Name="StoryPlayer"
                         HeightRequest="72"
                         ShouldAutoPlay="False"
                         ShouldShowPlaybackControls="True" />
+                    <HorizontalStackLayout Spacing="10">
+                        <Button
+                            Text="Previous"
+                            Clicked="OnPreviousStoryClicked" />
+                        <Button
+                            Text="Next"
+                            Clicked="OnNextStoryClicked" />
+                    </HorizontalStackLayout>
                     <HorizontalStackLayout Spacing="10">
                         <Button
                             Text="Play"
@@ -125,6 +137,14 @@
                         <Button
                             Text="Skip"
                             Clicked="OnSkipClicked" />
+                    </HorizontalStackLayout>
+                    <HorizontalStackLayout Spacing="10">
+                        <Button
+                            Text="Open source"
+                            Clicked="OnOpenSourceClicked" />
+                        <Button
+                            Text="Open map"
+                            Clicked="OnOpenMapClicked" />
                     </HorizontalStackLayout>
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                         <Entry
