@@ -44,7 +44,41 @@ public partial class MainPage : ContentPage
         DemoLocationPicker.SelectedIndex = 0;
         LanguagePicker.ItemsSource = new List<string> { "en", "hi", "te", "de" };
         LanguagePicker.SelectedIndex = 0;
+        ApiBaseUrlEntry.Text = apiClient.ApiBaseUrl;
+        ApiStatusLabel.Text = $"Using {apiClient.ApiBaseUrl}";
         UpdateMapPreview(demoLocations[0].Latitude, demoLocations[0].Longitude, demoLocations[0].Name);
+    }
+
+    private void OnSaveApiUrlClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            apiClient.ApiBaseUrl = ApiBaseUrlEntry.Text ?? "";
+            ApiBaseUrlEntry.Text = apiClient.ApiBaseUrl;
+            ApiStatusLabel.Text = $"Saved {apiClient.ApiBaseUrl}";
+        }
+        catch (Exception ex)
+        {
+            ApiStatusLabel.Text = $"Could not save API URL: {ex.Message}";
+        }
+    }
+
+    private async void OnTestConnectionClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            OnSaveApiUrlClicked(sender, e);
+            ApiStatusLabel.Text = "Testing API connection...";
+            var health = await apiClient.GetHealthAsync(CancellationToken.None);
+            var checks = health?.Checks is { Length: > 0 }
+                ? string.Join(", ", health.Checks.Select(check => $"{check.Name}:{check.Status}"))
+                : "no checks";
+            ApiStatusLabel.Text = $"API {health?.Status ?? "unknown"} - {checks}";
+        }
+        catch (Exception ex)
+        {
+            ApiStatusLabel.Text = $"API connection failed: {ex.Message}";
+        }
     }
 
     private async void OnFindStoriesClicked(object? sender, EventArgs e)

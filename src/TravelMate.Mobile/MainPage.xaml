@@ -20,6 +20,31 @@
             <Border StrokeThickness="1" Padding="14">
                 <VerticalStackLayout Spacing="10">
                     <Label
+                        Text="Connection"
+                        FontAttributes="Bold"
+                        FontSize="16" />
+                    <Entry
+                        x:Name="ApiBaseUrlEntry"
+                        Placeholder="API base URL" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button
+                            Text="Save API URL"
+                            Clicked="OnSaveApiUrlClicked" />
+                        <Button
+                            Grid.Column="1"
+                            Text="Test connection"
+                            Clicked="OnTestConnectionClicked" />
+                    </Grid>
+                    <Label
+                        x:Name="ApiStatusLabel"
+                        Text=""
+                        FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border StrokeThickness="1" Padding="14">
+                <VerticalStackLayout Spacing="10">
+                    <Label
                         Text="Demo location"
                         FontAttributes="Bold"
                         FontSize="16" />

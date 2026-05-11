@@ -77,3 +77,7 @@ public sealed record PlaceDto(
     string[] Categories);
 
 public sealed record GeoPointDto(double Latitude, double Longitude);
+
+public sealed record HealthResponse(string Status, HealthCheckDto[] Checks);
+
+public sealed record HealthCheckDto(string Name, string Status, string? Detail);

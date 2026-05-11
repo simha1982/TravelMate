@@ -72,6 +72,12 @@ Run the mobile smoke build and checklist:
 .\scripts\test-mobile.ps1
 ```
 
+Generate a local Android APK:
+
+```powershell
+.\scripts\build-apk.ps1
+```
+
 Run the admin moderation portal after starting the API:
 
 ```powershell

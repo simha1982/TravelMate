@@ -22,12 +22,8 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        builder.Services.AddSingleton(new HttpClient
-        {
-            BaseAddress = new Uri(DeviceInfo.Platform == DevicePlatform.Android
-                ? "http://10.0.2.2:5068/"
-                : "http://localhost:5068/")
-        });
+        builder.Services.AddSingleton<ApiEndpointSettings>();
+        builder.Services.AddSingleton<HttpClient>();
         builder.Services.AddSingleton<TravelMateApiClient>();
         builder.Services.AddTransient<MainPage>();
         builder.Services.AddSingleton<AppShell>();

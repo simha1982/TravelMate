@@ -3,9 +3,22 @@ using TravelMate.Mobile.Models;
 
 namespace TravelMate.Mobile.Services;
 
-public sealed class TravelMateApiClient(HttpClient httpClient)
+public sealed class TravelMateApiClient(HttpClient httpClient, ApiEndpointSettings endpointSettings)
 {
     private const string DemoUserId = "demo-user";
+
+    public string ApiBaseUrl
+    {
+        get => endpointSettings.ApiBaseUrl;
+        set => endpointSettings.ApiBaseUrl = value;
+    }
+
+    public async Task<HealthResponse?> GetHealthAsync(CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.GetAsync(CreateUri("health"), cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<HealthResponse>(cancellationToken);
+    }
 
     public async Task<IReadOnlyCollection<NearbyStoryDto>> GetNearbyStoriesAsync(
         double latitude,
@@ -14,7 +27,7 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         CancellationToken cancellationToken)
     {
         var uri = $"api/stories/nearby?userId={DemoUserId}&lat={latitude}&lon={longitude}&radiusMeters={radiusMeters}";
-        return await httpClient.GetFromJsonAsync<NearbyStoryDto[]>(uri, cancellationToken) ?? [];
+        return await httpClient.GetFromJsonAsync<NearbyStoryDto[]>(CreateUri(uri), cancellationToken) ?? [];
     }
 
     public async Task SavePlaybackEventAsync(
@@ -24,7 +37,7 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
     {
         var request = new PlaybackEventRequest(DemoUserId, action);
         using var response = await httpClient.PostAsJsonAsync(
-            $"api/stories/{storyId}/playback-events",
+            CreateUri($"api/stories/{storyId}/playback-events"),
             request,
             cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -35,7 +48,7 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         CancellationToken cancellationToken)
     {
         using var response = await httpClient.PostAsJsonAsync(
-            $"api/stories/{story.StoryId}/audio",
+            CreateUri($"api/stories/{story.StoryId}/audio"),
             new SpeechSynthesisRequest(story.ShortDescription, NormalizeLanguage(story.LanguageCode)),
             cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -45,7 +58,7 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
     public async Task<RagAnswerResponse?> AskAsync(string question, CancellationToken cancellationToken)
     {
         using var response = await httpClient.PostAsJsonAsync(
-            "api/rag/answer",
+            CreateUri("api/rag/answer"),
             new RagAnswerRequest(question, DemoUserId),
             cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -55,7 +68,7 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
     public async Task<StoryDetailDto?> GetStoryDetailAsync(Guid storyId, CancellationToken cancellationToken)
     {
         return await httpClient.GetFromJsonAsync<StoryDetailDto>(
-            $"api/stories/{storyId}",
+            CreateUri($"api/stories/{storyId}"),
             cancellationToken);
     }
 
@@ -65,7 +78,7 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         CancellationToken cancellationToken)
     {
         using var response = await httpClient.PostAsJsonAsync(
-            "api/preferences",
+            CreateUri("api/preferences"),
             new UserPreferenceRequest(DemoUserId, interests, preferredLanguageCode),
             cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -78,7 +91,7 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         CancellationToken cancellationToken)
     {
         using var response = await httpClient.PostAsJsonAsync(
-            $"api/users/{DemoUserId}/consents",
+            CreateUri($"api/users/{DemoUserId}/consents"),
             new SaveUserConsentRequest(locationConsent, voiceConsent, personalizationConsent),
             cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -94,7 +107,7 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         CancellationToken cancellationToken)
     {
         using var response = await httpClient.PostAsJsonAsync(
-            "api/contributions",
+            CreateUri("api/contributions"),
             new SubmitContributionRequest(
                 DemoUserId,
                 placeName,
@@ -113,7 +126,7 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
         CancellationToken cancellationToken)
     {
         using var response = await httpClient.PostAsJsonAsync(
-            "api/speech/synthesize",
+            CreateUri("api/speech/synthesize"),
             new SpeechSynthesisRequest(text, NormalizeLanguage(languageCode)),
             cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -135,4 +148,6 @@ public sealed class TravelMateApiClient(HttpClient httpClient)
 
     private static string NormalizeLanguage(string languageCode) =>
         languageCode.Equals("en", StringComparison.OrdinalIgnoreCase) ? "en-US" : languageCode;
+
+    private Uri CreateUri(string relativePath) => new(endpointSettings.ApiBaseUri, relativePath);
 }
