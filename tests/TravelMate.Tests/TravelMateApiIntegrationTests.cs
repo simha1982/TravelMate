@@ -40,6 +40,18 @@ public sealed class TravelMateApiIntegrationTests : IClassFixture<WebApplication
     }
 
     [Fact]
+    public async Task StoryDetail_ReturnsStoryAndPlace()
+    {
+        var storyId = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd204");
+
+        var detail = await client.GetFromJsonAsync<StoryDetailResponse>($"/api/stories/{storyId}");
+
+        Assert.NotNull(detail);
+        Assert.Equal("The Four Minarets at the Heart of Hyderabad", detail.Story.Title);
+        Assert.Equal("Charminar", detail.Place?.Name);
+    }
+
+    [Fact]
     public async Task AdminCreateStory_AddsStoryToPublicStoryList()
     {
         var places = await client.GetFromJsonAsync<PlaceResponse[]>("/api/places") ?? [];
@@ -71,5 +83,6 @@ public sealed class TravelMateApiIntegrationTests : IClassFixture<WebApplication
     private sealed record HealthCheckResponse(string Name, string Status, string? Detail);
     private sealed record PlaceResponse(Guid Id, string Name);
     private sealed record StoryResponse(Guid Id, string Title);
+    private sealed record StoryDetailResponse(StoryResponse Story, PlaceResponse? Place);
     private sealed record NearbyStoryResponse(Guid StoryId, string PlaceName, string Title);
 }

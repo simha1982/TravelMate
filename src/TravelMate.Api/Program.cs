@@ -134,6 +134,7 @@ app.MapGet("/", () => Results.Ok(new
     endpoints = new[]
     {
         "GET /api/stories/nearby",
+        "GET /api/stories/{storyId}",
         "GET /api/preferences/{userId}",
         "POST /api/preferences",
         "GET /api/users/{userId}/consents",
@@ -235,6 +236,24 @@ app.MapGet("/api/stories", async (
     return Results.Ok(stories);
 })
 .WithName("GetStories");
+
+app.MapGet("/api/stories/{storyId:guid}", async (
+    Guid storyId,
+    ITravelMateRepository repository,
+    CancellationToken cancellationToken) =>
+{
+    var stories = await repository.GetStoriesAsync(cancellationToken);
+    var story = stories.FirstOrDefault(item => item.Id == storyId);
+    if (story is null)
+    {
+        return Results.NotFound();
+    }
+
+    var places = await repository.GetPlacesAsync(cancellationToken);
+    var place = places.FirstOrDefault(item => item.Id == story.PlaceId);
+    return Results.Ok(new StoryDetailResponse(story, place));
+})
+.WithName("GetStoryDetail");
 
 app.MapGet("/api/preferences/{userId}", async (
     string userId,
@@ -553,5 +572,7 @@ static async Task SeedSearchAsync(IServiceProvider serviceProvider, Cancellation
 public sealed record PlaybackEventRequest(string UserId, PlaybackAction Action);
 
 public sealed record HealthCheckStatus(string Name, string Status, string? Detail = null);
+
+public sealed record StoryDetailResponse(Story Story, Place? Place);
 
 public partial class Program;

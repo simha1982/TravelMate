@@ -18,6 +18,11 @@ public sealed class NearbyStoryService(ITravelMateRepository repository)
             .Where(e => e.Action is PlaybackAction.Skipped or PlaybackAction.NotInterested)
             .Select(e => e.StoryId)
             .ToHashSet();
+        var recentlyPlayed = playbackEvents
+            .Where(e => e.Action is PlaybackAction.Played or PlaybackAction.Completed)
+            .Where(e => e.OccurredAt >= DateTimeOffset.UtcNow.AddDays(-7))
+            .Select(e => e.StoryId)
+            .ToHashSet();
 
         var query =
             from place in places
@@ -26,7 +31,7 @@ public sealed class NearbyStoryService(ITravelMateRepository repository)
             join story in stories on place.Id equals story.PlaceId
             where story.LanguageCode == preference.PreferredLanguageCode
             where !recentlySkipped.Contains(story.Id)
-            let score = ScoreStory(story, preference, distance)
+            let score = ScoreStory(story, preference, distance, recentlyPlayed.Contains(story.Id))
             orderby score descending, distance
             select new NearbyStoryResult(
                 story.Id,
@@ -43,7 +48,11 @@ public sealed class NearbyStoryService(ITravelMateRepository repository)
         return query.Take(5).ToArray();
     }
 
-    private static double ScoreStory(Story story, UserPreference preference, double distanceMeters)
+    private static double ScoreStory(
+        Story story,
+        UserPreference preference,
+        double distanceMeters,
+        bool wasRecentlyPlayed)
     {
         var interestScore = story.Categories
             .Select(category => preference.Interests.TryGetValue(category, out var weight) ? weight : 0.25)
@@ -53,7 +62,8 @@ public sealed class NearbyStoryService(ITravelMateRepository repository)
         var distanceScore = Math.Max(0, 1 - distanceMeters / 10_000);
         var qualityScore = story.QualityScore / 100d;
 
-        return Math.Round((interestScore * 0.55) + (distanceScore * 0.25) + (qualityScore * 0.20), 4);
+        var playbackPenalty = wasRecentlyPlayed ? 0.35 : 0;
+        return Math.Round(Math.Max(0, (interestScore * 0.55) + (distanceScore * 0.25) + (qualityScore * 0.20) - playbackPenalty), 4);
     }
 }
 

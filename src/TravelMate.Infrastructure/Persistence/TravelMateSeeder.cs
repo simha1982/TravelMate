@@ -25,6 +25,7 @@ public sealed class TravelMateSeeder(TravelMateDbContext dbContext)
     private static readonly Guid ShilparamamId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311117");
     private static readonly Guid DurgamCheruvuId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311118");
     private static readonly Guid PaigahPalaceId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311119");
+    private static readonly Guid LumbiniParkId = Guid.Parse("4d7df980-92e0-4ed7-a4a8-f98f82311120");
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
@@ -228,6 +229,16 @@ public sealed class TravelMateSeeder(TravelMateDbContext dbContext)
                 Latitude = 17.4432,
                 Longitude = 78.4622,
                 CategoriesJson = JsonSerializer.Serialize(new[] { "palace", "history", "architecture" }, JsonOptions)
+            },
+            new PlaceEntity
+            {
+                Id = LumbiniParkId,
+                Name = "Lumbini Park",
+                Country = "India",
+                Region = "Hyderabad",
+                Latitude = 17.4100,
+                Longitude = 78.4722,
+                CategoriesJson = JsonSerializer.Serialize(new[] { "nature", "waterfront", "family" }, JsonOptions)
             });
 
         dbContext.Stories.AddRange(
@@ -458,6 +469,18 @@ public sealed class TravelMateSeeder(TravelMateDbContext dbContext)
                 SourceName = "Wikipedia",
                 SourceUrl = "https://en.wikipedia.org/wiki/Paigah_Palace",
                 QualityScore = 78
+            },
+            new StoryEntity
+            {
+                Id = Guid.Parse("98ce9e03-6434-4a95-a07d-f90b676fd220"),
+                PlaceId = LumbiniParkId,
+                Title = "A Park Beside Hussain Sagar",
+                ShortDescription = "Lumbini Park, officially Anjaiah Lumbini Park, is a small urban park beside Hussain Sagar in central Hyderabad and a familiar stop for lakefront walks, boating, and evening views.",
+                LanguageCode = "en",
+                CategoriesJson = JsonSerializer.Serialize(new[] { "nature", "waterfront", "family" }, JsonOptions),
+                SourceName = "Wikipedia",
+                SourceUrl = "https://en.wikipedia.org/wiki/Lumbini_Park",
+                QualityScore = 79
             });
 
         await dbContext.SaveChangesAsync(cancellationToken);
