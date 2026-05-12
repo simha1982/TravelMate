@@ -78,6 +78,8 @@ Generate a local Android APK:
 .\scripts\build-apk.ps1
 ```
 
+GitHub Actions also builds the APK as a downloadable artifact through `.github/workflows/android-apk.yml`.
+
 Run the admin moderation portal after starting the API:
 
 ```powershell

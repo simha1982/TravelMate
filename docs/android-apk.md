@@ -45,3 +45,57 @@ After install:
 4. Use `Start demo trip`.
 
 The APK targets Android 8.0/API 26 or newer because the in-app media playback package requires Android 26+. If the API is not reachable, the demo trip still shows a small offline Hyderabad/Nandi Hills story catalog so the app can open and demonstrate the flow.
+
+## GitHub APK Artifact
+
+The `Android APK` workflow builds the APK on every push and pull request:
+
+```text
+.github/workflows/android-apk.yml
+```
+
+After a workflow run completes, download:
+
+```text
+TravelMate.Mobile-release-apk
+```
+
+The artifact contains:
+
+```text
+TravelMate.Mobile-release.apk
+```
+
+## Optional Release Signing
+
+For a real release APK, create an Android keystore outside the repository and add these GitHub Actions secrets:
+
+```text
+ANDROID_KEYSTORE_BASE64
+ANDROID_KEYSTORE_PASSWORD
+ANDROID_KEY_ALIAS
+ANDROID_KEY_PASSWORD
+```
+
+`ANDROID_KEYSTORE_BASE64` should be the base64 text of the `.keystore` file. On Windows:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("travelmate-release.keystore")) | Set-Content travelmate-release.keystore.base64
+```
+
+Then run the `Android APK` workflow manually from GitHub Actions. It will produce a second artifact:
+
+```text
+TravelMate.Mobile-signed-release-apk
+```
+
+Local signed build example:
+
+```powershell
+.\scripts\build-apk.ps1 `
+  -OutputName TravelMate.Mobile-signed-release.apk `
+  -KeystorePath C:\secure\travelmate-release.keystore `
+  -KeystorePassword "<store-password>" `
+  -KeyAlias "<key-alias>" `
+  -KeyPassword "<key-password>"
+```
