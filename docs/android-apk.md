@@ -46,6 +46,8 @@ After install:
 
 The APK targets Android 8.0/API 26 or newer because the in-app media playback package requires Android 26+. If the API is not reachable, the demo trip still shows a small offline Hyderabad/Nandi Hills story catalog so the app can open and demonstrate the flow.
 
+`Test connection` calls both `/health` and `/api/mobile/diagnostics`. A healthy local setup should show database/search/storage as local or healthy, and AI/Speech as `local-stub` until Azure settings are supplied.
+
 ## GitHub APK Artifact
 
 The `Android APK` workflow builds the APK on every push and pull request:

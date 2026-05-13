@@ -155,6 +155,28 @@ app.MapGet("/api/auth/status", () => Results.Ok(new
 }))
 .WithName("AuthStatus");
 
+app.MapGet("/api/mobile/diagnostics", (
+    IStorySearchService searchService,
+    IConfiguration configuration) =>
+{
+    var assemblyVersion = typeof(Program).Assembly.GetName().Version?.ToString() ?? "dev";
+    return Results.Ok(new MobileDiagnosticsResponse(
+        "TravelMate",
+        assemblyVersion,
+        DateTimeOffset.UtcNow,
+        app.Environment.EnvironmentName,
+        app.Configuration.GetValue("Auth:RequireApiKey", false),
+        azureAdB2CEnabled,
+        adminAuthEnabled,
+        searchService.GetType().Name.Contains("Azure", StringComparison.OrdinalIgnoreCase)
+            ? "azure-configured"
+            : "local",
+        string.IsNullOrWhiteSpace(configuration["AudioStorage:ConnectionString"]) ? "local" : "azure-configured",
+        string.IsNullOrWhiteSpace(configuration["AzureOpenAI:Endpoint"]) ? "local-stub" : "azure-configured",
+        string.IsNullOrWhiteSpace(configuration["AzureSpeech:Region"]) ? "local-stub" : "azure-configured"));
+})
+.WithName("MobileDiagnostics");
+
 app.MapGet("/health", async (
     ITravelMateRepository repository,
     IStorySearchService searchService,
@@ -574,5 +596,18 @@ public sealed record PlaybackEventRequest(string UserId, PlaybackAction Action);
 public sealed record HealthCheckStatus(string Name, string Status, string? Detail = null);
 
 public sealed record StoryDetailResponse(Story Story, Place? Place);
+
+public sealed record MobileDiagnosticsResponse(
+    string AppName,
+    string ApiVersion,
+    DateTimeOffset ServerUtc,
+    string EnvironmentName,
+    bool ApiKeyEnabled,
+    bool AzureAdB2CEnabled,
+    bool AdminAuthEnabled,
+    string SearchMode,
+    string StorageMode,
+    string AiMode,
+    string SpeechMode);
 
 public partial class Program;

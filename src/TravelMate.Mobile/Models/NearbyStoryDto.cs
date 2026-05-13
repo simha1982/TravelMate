@@ -81,3 +81,16 @@ public sealed record GeoPointDto(double Latitude, double Longitude);
 public sealed record HealthResponse(string Status, HealthCheckDto[] Checks);
 
 public sealed record HealthCheckDto(string Name, string Status, string? Detail);
+
+public sealed record MobileDiagnosticsDto(
+    string AppName,
+    string ApiVersion,
+    DateTimeOffset ServerUtc,
+    string EnvironmentName,
+    bool ApiKeyEnabled,
+    bool AzureAdB2CEnabled,
+    bool AdminAuthEnabled,
+    string SearchMode,
+    string StorageMode,
+    string AiMode,
+    string SpeechMode);

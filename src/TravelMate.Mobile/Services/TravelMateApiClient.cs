@@ -20,6 +20,13 @@ public sealed class TravelMateApiClient(HttpClient httpClient, ApiEndpointSettin
         return await response.Content.ReadFromJsonAsync<HealthResponse>(cancellationToken);
     }
 
+    public async Task<MobileDiagnosticsDto?> GetMobileDiagnosticsAsync(CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.GetAsync(CreateUri("api/mobile/diagnostics"), cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<MobileDiagnosticsDto>(cancellationToken);
+    }
+
     public async Task<IReadOnlyCollection<NearbyStoryDto>> GetNearbyStoriesAsync(
         double latitude,
         double longitude,

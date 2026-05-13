@@ -30,6 +30,19 @@ public sealed class TravelMateApiIntegrationTests : IClassFixture<WebApplication
     }
 
     [Fact]
+    public async Task MobileDiagnostics_ReturnsRuntimeModes()
+    {
+        var diagnostics = await client.GetFromJsonAsync<MobileDiagnosticsResponse>("/api/mobile/diagnostics");
+
+        Assert.NotNull(diagnostics);
+        Assert.Equal("TravelMate", diagnostics.AppName);
+        Assert.Equal("local", diagnostics.SearchMode);
+        Assert.Equal("local", diagnostics.StorageMode);
+        Assert.Equal("local-stub", diagnostics.AiMode);
+        Assert.Equal("local-stub", diagnostics.SpeechMode);
+    }
+
+    [Fact]
     public async Task NearbyStories_ReturnsHyderabadSeedStories()
     {
         var stories = await client.GetFromJsonAsync<NearbyStoryResponse[]>(
@@ -95,6 +108,18 @@ public sealed class TravelMateApiIntegrationTests : IClassFixture<WebApplication
 
     private sealed record HealthResponse(string Status, HealthCheckResponse[] Checks);
     private sealed record HealthCheckResponse(string Name, string Status, string? Detail);
+    private sealed record MobileDiagnosticsResponse(
+        string AppName,
+        string ApiVersion,
+        DateTimeOffset ServerUtc,
+        string EnvironmentName,
+        bool ApiKeyEnabled,
+        bool AzureAdB2CEnabled,
+        bool AdminAuthEnabled,
+        string SearchMode,
+        string StorageMode,
+        string AiMode,
+        string SpeechMode);
     private sealed record PlaceResponse(Guid Id, string Name);
     private sealed record StoryResponse(Guid Id, string Title);
     private sealed record StoryDetailResponse(StoryResponse Story, PlaceResponse? Place);

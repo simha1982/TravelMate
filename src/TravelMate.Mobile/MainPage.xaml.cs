@@ -70,10 +70,14 @@ public partial class MainPage : ContentPage
             OnSaveApiUrlClicked(sender, e);
             ApiStatusLabel.Text = "Testing API connection...";
             var health = await apiClient.GetHealthAsync(CancellationToken.None);
+            var diagnostics = await apiClient.GetMobileDiagnosticsAsync(CancellationToken.None);
             var checks = health?.Checks is { Length: > 0 }
                 ? string.Join(", ", health.Checks.Select(check => $"{check.Name}:{check.Status}"))
                 : "no checks";
-            ApiStatusLabel.Text = $"API {health?.Status ?? "unknown"} - {checks}";
+            var modes = diagnostics is null
+                ? "diagnostics unavailable"
+                : $"{diagnostics.EnvironmentName}, search:{diagnostics.SearchMode}, ai:{diagnostics.AiMode}, speech:{diagnostics.SpeechMode}";
+            ApiStatusLabel.Text = $"API {health?.Status ?? "unknown"} - {checks}. {modes}";
         }
         catch (Exception ex)
         {
